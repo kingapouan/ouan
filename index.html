@@ -46,7 +46,7 @@ nav button b{display:block;font-size:22px;font-weight:400}nav button.on{color:va
 input,textarea,select{width:100%;font:inherit;font-size:15px;padding:12px;border-radius:14px;border:2px solid var(--line);background:var(--bg);color:var(--text);margin-bottom:10px}
 label{font-size:13px;color:var(--ink)}
 .cta{width:100%;border:0;border-radius:18px;background:var(--blue);color:#fff;font:700 17px 'Mali',sans-serif;padding:15px;cursor:pointer}
-#qr{display:grid;place-items:center;padding:12px;background:#fff;border-radius:16px;margin:8px 0}.slip{max-width:100%;max-height:200px;border-radius:12px;margin:6px 0}.slip[hidden]{display:none}.cta:disabled{opacity:.6}
+#qr{display:grid;place-items:center;padding:12px;background:#fff;border-radius:16px;margin:8px 0}.slip{max-width:100%;max-height:200px;border-radius:12px;margin:6px 0}.slip[hidden]{display:none}.cta:disabled{opacity:.6}.modal{position:fixed;inset:0;background:rgba(43,47,69,.5);display:flex;align-items:flex-end;justify-content:center;z-index:20}.modal[hidden]{display:none}.sheet{width:100%;max-width:480px;background:var(--card);border-radius:28px 28px 0 0;padding:20px 18px calc(20px + env(safe-area-inset-bottom,0px));border:3px solid var(--blue);border-bottom:0}.sheet h3{margin:0 0 2px;font-size:18px}.opt{display:flex;justify-content:space-between;align-items:center;width:100%;font:inherit;font-size:16px;font-weight:600;padding:14px 16px;margin-top:10px;border-radius:18px;border:2.5px solid var(--blue);background:var(--bg);color:var(--text);cursor:pointer}.opt b{color:var(--blue)}.opt:active{background:var(--sun)}.sw{display:flex;flex-wrap:wrap;gap:4px;margin-top:8px}.sw button{border:2px solid var(--line);background:var(--bg);color:var(--text);font:inherit;font-size:11px;padding:3px 8px;border-radius:99px;cursor:pointer}.sw button.on{background:var(--sun);border-color:var(--sun);color:#3a3000;font-weight:700}
 body{background-image:radial-gradient(var(--line) 1.5px,transparent 1.5px);background-size:22px 22px}
 header img{border:3px solid var(--yellow);border-radius:22px;transform:rotate(-4deg)}
 header h1{font-size:22px}
@@ -74,6 +74,8 @@ nav{border-radius:26px 26px 0 0;border:2.5px solid var(--line);border-bottom:0}
 .toast{position:fixed;top:calc(14px + env(safe-area-inset-top,0px));left:50%;transform:translate(-50%,-90px);background:var(--text);color:var(--bg);padding:10px 18px;border-radius:99px;font-size:14px;transition:transform .25s;z-index:9}
 .toast.show{transform:translate(-50%,0)}
 @media (prefers-reduced-motion:reduce){.toast{transition:none}}
+.pic{overflow:hidden}.pic img{width:100%;height:100%;object-fit:cover}
+.line img{width:34px;height:34px;border-radius:10px;object-fit:cover;vertical-align:middle}.line img{width:30px;height:30px;border-radius:8px;object-fit:cover;vertical-align:middle}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 </head>
@@ -104,15 +106,26 @@ nav{border-radius:26px 26px 0 0;border:2.5px solid var(--line);border-bottom:0}
   <button data-v="orders"><b>🧾</b>ออเดอร์</button>
   <button data-v="me"><b>🙂</b>ฉัน</button>
 </div></nav>
+<div class="modal" id="modal" hidden onclick="if(event.target===this)closeSw()"><div class="sheet" role="dialog" aria-modal="true" aria-labelledby="mTitle"><h3 id="mTitle"></h3><small style="color:var(--ink)">เลือกระดับความหวาน</small><div id="mOpts"></div><button class="opt" onclick="closeSw()" style="border-color:var(--line);justify-content:center;color:var(--ink)">ยกเลิก</button></div></div>
 <div class="toast" id="toast"></div>
 
 <script>
 const MENU=[
-{id:1,c:'เค้ก',n:'เค้กบานนอฟฟี่',d:'ชิ้นใหญ่ เข้มข้น',p:35,e:'🍫'},
-{id:2,c:'เค้ก',n:'เค้กบานนอฟฟี่สตอเบอร์รี่',d:'หน้านุ่ม ซอสเปรี้ยวหวาน',p:39,e:'🍓'},
-{id:10,c:'เครื่องดื่ม',n:'ชาไทยเย็น',d:'หวานมัน ชงสด',p:25,e:'🥤'},
-{id:11,c:'เครื่องดื่ม',n:'สตอเบอร์รี่นมสด',d:'สดชื่น หวานเปรี้ยว',p:25,e:'🍼'}
+// img: ใส่ path หรือ URL รูป (เช่น 'images/banoffee.jpg') ถ้าเว้นว่างจะใช้อิโมจิ e แทน
+{id:1,c:'เค้ก',n:'เค้กบานนอฟฟี่',d:'ชิ้นใหญ่ เข้มข้น',p:35,e:'🍫',img:''},
+{id:2,c:'เค้ก',n:'เค้กบานนอฟฟี่สตอเบอร์รี่',d:'หน้านุ่ม ซอสเปรี้ยวหวาน',p:39,e:'🍓',img:''},
+{id:10,c:'เครื่องดื่ม',n:'ชาอ้วน',d:'หวานมัน ชงสด',p:25,e:'🥤',img:''},
+{id:11,c:'เครื่องดื่ม',n:'สตอเบอร์รี่นมสด',d:'สดชื่น หวานเปรี้ยว',p:25,e:'🍼',img:''},
+{id:12,c:'เครื่องดื่ม',n:'โกโก้อ้วน',d:'',p:25,e:'🍼',img:''}
 ];
+const SW=[['หวานน้อย','25%'],['หวานปกติ','50%'],['หวานมาก','100%'],['หวานอ้วน','200%']],hasSw=m=>m.c=='เครื่องดื่ม';
+const prod=k=>MENU.find(m=>m.id==parseInt(k)),swOf=k=>String(k).split(':')[1]||'';
+function add(k){chg(k,1);toast('เพิ่มลงตะกร้าแล้ว')}
+function askSw(id){const m=prod(id);$('#mTitle').textContent=m.n;$('#mOpts').innerHTML=SW.map(v=>`<button class="opt" onclick="pickSw(${id},'${v[0]} ${v[1]}')"><span>${v[0]}</span><b>${v[1]}</b></button>`).join('');$('#modal').hidden=false}
+function pickSw(id,v){closeSw();add(id+':'+v)}
+function closeSw(){$('#modal').hidden=true}
+document.addEventListener('keydown',e=>{if(e.key=='Escape')closeSw()});
+const face=m=>m.img?`<img src="${m.img}" alt="${m.n}" loading="lazy" onerror="this.outerHTML='${m.e||'🍰'}'">`:(m.e||'🍰');
 const CATS=['ทั้งหมด',...new Set(MENU.map(m=>m.c))];
 let cat='ทั้งหมด',cart={},orders=[],me={};
 const $=s=>document.querySelector(s),fmt=n=>'฿'+n.toLocaleString('th-TH');
@@ -120,12 +133,12 @@ try{cart=JSON.parse(localStorage.getItem('ouan-cart')||'{}');orders=JSON.parse(l
 function save(){try{localStorage.setItem('ouan-cart',JSON.stringify(cart));localStorage.setItem('ouan-orders',JSON.stringify(orders));localStorage.setItem('ouan-me',JSON.stringify(me))}catch(e){}}
 function toast(t){const el=$('#toast');el.textContent=t;el.classList.add('show');setTimeout(()=>el.classList.remove('show'),1600)}
 const count=()=>Object.values(cart).reduce((a,b)=>a+b,0);
-const total=()=>Object.entries(cart).reduce((a,[id,q])=>a+MENU.find(m=>m.id==id).p*q,0);
+const total=()=>Object.entries(cart).reduce((a,[id,q])=>a+prod(id).p*q,0);
 function chg(id,d){cart[id]=(cart[id]||0)+d;if(cart[id]<=0)delete cart[id];save();render()}
-function ctl(id){const q=cart[id]||0;return q?`<div class="qty"><button class="m" onclick="chg(${id},-1)" aria-label="ลด">−</button>${q}<button onclick="chg(${id},1)" aria-label="เพิ่ม">+</button></div>`:`<button class="add" onclick="chg(${id},1);toast('เพิ่มลงตะกร้าแล้ว')" aria-label="เพิ่มลงตะกร้า">+</button>`}
+function ctl(id){const q=cart[id]||0;return q?`<div class="qty"><button class="m" onclick="chg('${id}',-1)" aria-label="ลด">−</button>${q}<button onclick="chg('${id}',1)" aria-label="เพิ่ม">+</button></div>`:`<button class="add" onclick="chg('${id}',1);toast('เพิ่มลงตะกร้าแล้ว')" aria-label="เพิ่มลงตะกร้า">+</button>`}
 function render(){
   $('#chips').innerHTML=CATS.map(c=>`<button class="${c==cat?'on':''}" onclick="cat='${c}';render()">${c}</button>`).join('');
-  $('#grid').innerHTML=MENU.filter(m=>cat=='ทั้งหมด'||m.c==cat).map(m=>`<div class="item"><div class="pic">${m.e}</div><h3>${m.n}</h3><small>${m.d}</small><div class="row"><span class="price">${fmt(m.p)}</span>${ctl(m.id)}</div></div>`).join('');
+  $('#grid').innerHTML=MENU.filter(m=>cat=='ทั้งหมด'||m.c==cat).map(m=>`<div class="item"><div class="pic">${face(m)}</div><h3>${m.n}</h3><small>${m.d}</small><div class="row"><span class="price">${fmt(m.p)}</span>${hasSw(m)?`<button class="add" onclick="askSw(${m.id})" aria-label="เพิ่มลงตะกร้า">+</button>`:ctl(m.id)}</div></div>`).join('');
   const q=count();$('#bar').hidden=!q||$('.view.on').id!='v-menu';$('#barQ').textContent=q+' รายการ · ดูตะกร้า';$('#barT').textContent=fmt(total());
   renderCart();renderOrders();
 }
@@ -133,7 +146,7 @@ function renderCart(){
   const ids=Object.keys(cart);
   if(!ids.length){$('#cartBody').innerHTML='<div class="empty"><i>🛒</i>ตะกร้ายังว่าง<br>เลือกขนมที่ชอบจากหน้าเมนูได้เลย</div>';return}
   const ship=total()>=200?0:25;
-  $('#cartBody').innerHTML=`<h2 style="font-size:18px">ตะกร้าของฉัน</h2><div class="card">${ids.map(id=>{const m=MENU.find(x=>x.id==id);return `<div class="line"><span>${m.e} ${m.n}<br><small style="color:var(--ink)">${fmt(m.p)}</small></span>${ctl(m.id)}</div>`}).join('')}</div>
+  $('#cartBody').innerHTML=`<h2 style="font-size:18px">ตะกร้าของฉัน</h2><div class="card">${ids.map(id=>{const m=prod(id);return `<div class="line"><span>${face(m)} ${m.n}${swOf(id)?' · '+swOf(id):''}<br><small style="color:var(--ink)">${fmt(m.p)}</small></span>${ctl(id)}</div>`}).join('')}</div>
   <div class="card"><div class="line"><span>ค่าขนม</span><span>${fmt(total())}</span></div><div class="line"><span>ค่าส่ง</span><span>${ship?fmt(ship):'ฟรี'}</span></div><div class="line"><b>รวมทั้งหมด</b><b class="price">${fmt(total()+ship)}</b></div></div>
   <div class="card"><label>ชื่อ</label><input id="oName" value="${me.name||''}"><label>เบอร์โทร</label><input id="oTel" inputmode="tel" value="${me.tel||''}"><label>ที่อยู่จัดส่ง</label><textarea id="oAddr" rows="2">${me.addr||''}</textarea><label>วิธีรับของ</label><select id="oWay" onchange="updatePay()"><option>จัดส่ง</option><option>รับที่ร้าน</option></select><label>วิธีชำระเงิน</label><input id="oPay" value="โอนเงิน / พร้อมเพย์" readonly><label>หมายเหตุ</label><input id="oNote" placeholder="เช่น ไม่หวานมาก"><div id="payBox"></div></div>
   <button class="cta" onclick="order()">ยืนยันสั่งซื้อ</button>`;updatePay();
@@ -142,7 +155,7 @@ async function order(){
   const name=$('#oName').value.trim(),tel=$('#oTel').value.trim(),addr=$('#oAddr').value.trim(),way=$('#oWay').value;
   if(!name||!tel||(way=='จัดส่ง'&&!addr)){toast('กรอกชื่อ เบอร์โทร และที่อยู่ให้ครบ');return}
   me={name,tel,addr};
-  const items=Object.entries(cart).map(([id,q])=>{const m=MENU.find(x=>x.id==id);return {n:m.n,q,p:m.p}});
+  const items=Object.entries(cart).map(([id,q])=>{const m=prod(id);return {n:m.n+(swOf(id)?' ('+swOf(id)+')':''),q,p:m.p}});
   const ship=way=='จัดส่ง'&&total()<200?25:0;
   const slipFile=$('#oSlip')&&$('#oSlip').files[0],payM=$('#oPay').value;if(payM.startsWith('โอน')&&!slipFile){toast('แนบสลิปโอนเงินก่อน');return}const rec={no:'OU'+String(Date.now()).slice(-5),t:new Date().toLocaleString('th-TH',{dateStyle:'short',timeStyle:'short'}),items,sum:total()+ship,way,pay:payM,note:$('#oNote').value,name,tel,addr};
   const btn=document.querySelector('.cta[onclick="order()"]');btn.disabled=true;btn.textContent='กำลังส่งออเดอร์...';
