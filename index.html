@@ -46,7 +46,7 @@ nav button b{display:block;font-size:22px;font-weight:400}nav button.on{color:va
 input,textarea,select{width:100%;font:inherit;font-size:15px;padding:12px;border-radius:14px;border:2px solid var(--line);background:var(--bg);color:var(--text);margin-bottom:10px}
 label{font-size:13px;color:var(--ink)}
 .cta{width:100%;border:0;border-radius:18px;background:var(--blue);color:#fff;font:700 17px 'Mali',sans-serif;padding:15px;cursor:pointer}
-#qr{display:grid;place-items:center;padding:12px;background:#fff;border-radius:16px;margin:8px 0}.slip{max-width:100%;max-height:200px;border-radius:12px;margin:6px 0}.slip[hidden]{display:none}.cta:disabled{opacity:.6}.locbtn{width:100%;border:2.5px dashed var(--blue);background:var(--soft);color:var(--blue);font:inherit;font-weight:700;padding:11px;border-radius:16px;cursor:pointer;margin-bottom:8px}.locres{font-size:14px;margin-bottom:10px}.modal{position:fixed;inset:0;background:rgba(43,47,69,.5);display:flex;align-items:flex-end;justify-content:center;z-index:20}.modal[hidden]{display:none}.sheet{width:100%;max-width:480px;background:var(--card);border-radius:28px 28px 0 0;padding:20px 18px calc(20px + env(safe-area-inset-bottom,0px));border:3px solid var(--blue);border-bottom:0}.sheet h3{margin:0 0 2px;font-size:18px}.opt{display:flex;justify-content:space-between;align-items:center;width:100%;font:inherit;font-size:16px;font-weight:600;padding:14px 16px;margin-top:10px;border-radius:18px;border:2.5px solid var(--blue);background:var(--bg);color:var(--text);cursor:pointer}.opt b{color:var(--blue)}.opt:active{background:var(--sun)}.sw{display:flex;flex-wrap:wrap;gap:4px;margin-top:8px}.sw button{border:2px solid var(--line);background:var(--bg);color:var(--text);font:inherit;font-size:11px;padding:3px 8px;border-radius:99px;cursor:pointer}.sw button.on{background:var(--sun);border-color:var(--sun);color:#3a3000;font-weight:700}
+#qr{display:grid;place-items:center;padding:12px;background:#fff;border-radius:16px;margin:8px 0}.slip{max-width:100%;max-height:200px;border-radius:12px;margin:6px 0}.slip[hidden]{display:none}.cta:disabled{opacity:.6}.pill{display:inline-block;background:var(--sun);color:#3a3000;font-weight:700;padding:5px 12px;border-radius:99px;font-size:13px;margin:6px 0}.pill.bad{background:#ffd9d9;color:#8a1f1f}.steps{display:flex;gap:4px;margin:4px 0 8px}.steps span{flex:1;text-align:center;font-size:11px;padding:6px 2px;border-radius:10px;background:var(--soft);color:var(--ink)}.steps span.on{background:var(--blue);color:#fff;font-weight:700}.sold{background:var(--soft);color:var(--ink);padding:6px 12px;border-radius:99px;font-size:13px;font-weight:700}.locbtn{width:100%;border:2.5px dashed var(--blue);background:var(--soft);color:var(--blue);font:inherit;font-weight:700;padding:11px;border-radius:16px;cursor:pointer;margin-bottom:8px}.locres{font-size:14px;margin-bottom:10px}.modal{position:fixed;inset:0;background:rgba(43,47,69,.5);display:flex;align-items:flex-end;justify-content:center;z-index:20}.modal[hidden]{display:none}.sheet{width:100%;max-width:480px;background:var(--card);border-radius:28px 28px 0 0;padding:20px 18px calc(20px + env(safe-area-inset-bottom,0px));border:3px solid var(--blue);border-bottom:0}.sheet h3{margin:0 0 2px;font-size:18px}.opt{display:flex;justify-content:space-between;align-items:center;width:100%;font:inherit;font-size:16px;font-weight:600;padding:14px 16px;margin-top:10px;border-radius:18px;border:2.5px solid var(--blue);background:var(--bg);color:var(--text);cursor:pointer}.opt b{color:var(--blue)}.opt:active{background:var(--sun)}.sw{display:flex;flex-wrap:wrap;gap:4px;margin-top:8px}.sw button{border:2px solid var(--line);background:var(--bg);color:var(--text);font:inherit;font-size:11px;padding:3px 8px;border-radius:99px;cursor:pointer}.sw button.on{background:var(--sun);border-color:var(--sun);color:#3a3000;font-weight:700}
 body{background-image:radial-gradient(var(--line) 1.5px,transparent 1.5px);background-size:22px 22px}
 header img{border:3px solid var(--yellow);border-radius:22px;transform:rotate(-4deg)}
 header h1{font-size:22px}
@@ -112,11 +112,11 @@ nav{border-radius:26px 26px 0 0;border:2.5px solid var(--line);border-bottom:0}
 <script>
 const MENU=[
 // img: ใส่ path หรือ URL รูป (เช่น 'images/banoffee.jpg') ถ้าเว้นว่างจะใช้อิโมจิ e แทน
-{id:1,c:'เค้ก',n:'เค้กบานอฟฟี่',d:'ชิ้นใหญ่ เข้มข้น',p:35,e:'🍫',img:''},
-{id:2,c:'เค้ก',n:'เค้กบานอฟฟี่สตอเบอร์รี่',d:'หน้านุ่ม ซอสเปรี้ยวหวาน',p:39,e:'🍓',img:''},
+{id:1,c:'เค้ก',n:'เค้กบานนอฟฟี่',d:'ชิ้นใหญ่ เข้มข้น',p:35,e:'🍫',img:''},
+{id:2,c:'เค้ก',n:'เค้กบานนอฟฟี่สตอเบอร์รี่',d:'หน้านุ่ม ซอสเปรี้ยวหวาน',p:39,e:'🍓',img:''},
 {id:10,c:'เครื่องดื่ม',n:'ชาอ้วน',d:'หวานมัน ชงสด',p:25,e:'🥤',img:''},
 {id:11,c:'เครื่องดื่ม',n:'สตอเบอร์รี่นมสด',d:'สดชื่น หวานเปรี้ยว',p:25,e:'🍼',img:''},
-{id:12,c:'เครื่องดื่ม',n:'โกโก้อ้วน',d:'',p:25,e:'☕',img:''}
+{id:12,c:'เครื่องดื่ม',n:'โกโก้อ้วน',d:'',p:25,e:'🍼',img:''}
 ];
 const SW=[['หวานน้อย','25%'],['หวานปกติ','50%'],['หวานมาก','100%'],['หวานอ้วน','200%']],hasSw=m=>m.c=='เครื่องดื่ม';
 const prod=k=>MENU.find(m=>m.id==parseInt(k)),swOf=k=>String(k).split(':')[1]||'';
@@ -126,7 +126,7 @@ function pickSw(id,v){closeSw();add(id+':'+v)}
 function closeSw(){$('#modal').hidden=true}
 document.addEventListener('keydown',e=>{if(e.key=='Escape')closeSw()});
 const face=m=>m.img?`<img src="${m.img}" alt="${m.n}" loading="lazy" onerror="this.outerHTML='${m.e||'🍰'}'">`:(m.e||'🍰');
-const CATS=['ทั้งหมด',...new Set(MENU.map(m=>m.c))];
+let CATS=['ทั้งหมด',...new Set(MENU.map(m=>m.c))];
 let cat='ทั้งหมด',cart={},orders=[],me={};
 const $=s=>document.querySelector(s),fmt=n=>'฿'+n.toLocaleString('th-TH');
 try{cart=JSON.parse(localStorage.getItem('ouan-cart')||'{}');orders=JSON.parse(localStorage.getItem('ouan-orders')||'[]');me=JSON.parse(localStorage.getItem('ouan-me')||'{}')}catch(e){}
@@ -138,8 +138,8 @@ function chg(id,d){cart[id]=(cart[id]||0)+d;if(cart[id]<=0)delete cart[id];save(
 function ctl(id){const q=cart[id]||0;return q?`<div class="qty"><button class="m" onclick="chg('${id}',-1)" aria-label="ลด">−</button>${q}<button onclick="chg('${id}',1)" aria-label="เพิ่ม">+</button></div>`:`<button class="add" onclick="chg('${id}',1);toast('เพิ่มลงตะกร้าแล้ว')" aria-label="เพิ่มลงตะกร้า">+</button>`}
 function render(){
   $('#chips').innerHTML=CATS.map(c=>`<button class="${c==cat?'on':''}" onclick="cat='${c}';render()">${c}</button>`).join('');
-  $('#grid').innerHTML=MENU.filter(m=>cat=='ทั้งหมด'||m.c==cat).map(m=>`<div class="item"><div class="pic">${face(m)}</div><h3>${m.n}</h3><small>${m.d}</small><div class="row"><span class="price">${fmt(m.p)}</span>${hasSw(m)?`<button class="add" onclick="askSw(${m.id})" aria-label="เพิ่มลงตะกร้า">+</button>`:ctl(m.id)}</div></div>`).join('');
-  const q=count();$('#bar').hidden=!q||$('.view.on').id!='v-menu';$('#barQ').textContent=q+' รายการ · ดูตะกร้า';$('#barT').textContent=fmt(total());
+  $('#grid').innerHTML=MENU.filter(m=>cat=='ทั้งหมด'||m.c==cat).map(m=>`<div class="item"><div class="pic">${face(m)}</div><h3>${m.n}</h3><small>${m.d}${m.stock!==''&&m.stock!=null&&m.stock>0&&m.stock<=5?' · เหลือ '+m.stock:''}</small><div class="row"><span class="price">${fmt(m.p)}</span>${soldOut(m)?'<span class="sold">หมด</span>':(hasSw(m)?`<button class="add" onclick="askSw(${m.id})" aria-label="เพิ่มลงตะกร้า">+</button>`:ctl(m.id))}</div></div>`).join('');
+  if(loading)$('#grid').innerHTML='<div class="empty" style="grid-column:1/-1"><i>🧁</i>กำลังโหลดเมนู...</div>';const q=count();$('#bar').hidden=!q||$('.view.on').id!='v-menu';$('#barQ').textContent=q+' รายการ · ดูตะกร้า';$('#barT').textContent=fmt(total());
   renderCart();renderOrders();
 }
 function renderCart(){
@@ -155,14 +155,14 @@ async function order(){
   const name=$('#oName').value.trim(),tel=$('#oTel').value.trim(),addr=$('#oAddr').value.trim(),way=$('#oWay').value;
   if(!name||!tel||(way=='จัดส่ง'&&!addr)){toast('กรอกชื่อ เบอร์โทร และที่อยู่ให้ครบ');return}
   me={name,tel,addr};
-  const items=Object.entries(cart).map(([id,q])=>{const m=prod(id);return {n:m.n+(swOf(id)?' ('+swOf(id)+')':''),q,p:m.p}});
+  const items=Object.entries(cart).map(([id,q])=>{const m=prod(id);return {id:m.id,n:m.n+(swOf(id)?' ('+swOf(id)+')':''),q,p:m.p}});
   const ship=shipFee(way);
   const slipFile=$('#oSlip')&&$('#oSlip').files[0],payM=$('#oPay').value;if(payM.startsWith('โอน')&&!slipFile){toast('แนบสลิปโอนเงินก่อน');return}const rec={no:'OU'+String(Date.now()).slice(-5),t:new Date().toLocaleString('th-TH',{dateStyle:'short',timeStyle:'short'}),items,sum:total()+ship,way,pay:payM,note:$('#oNote').value,name,tel,addr,km:loc?+loc.km.toFixed(1):'',map:loc?'https://maps.google.com/?q='+loc.lat+','+loc.lng:''};
-  const btn=document.querySelector('.cta[onclick="order()"]');btn.disabled=true;btn.textContent='กำลังส่งออเดอร์...';
-  try{if(ENDPOINT){const slip=slipFile?await shrink(slipFile):'';const r=await fetch(ENDPOINT,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({...rec,slip})});const j=await r.json();if(!j.ok)throw 0}}catch(e){btn.disabled=false;btn.textContent='ยืนยันสั่งซื้อ';toast('ส่งออเดอร์ไม่สำเร็จ ลองใหม่อีกครั้ง');return}
-  rec.sent=!!ENDPOINT;orders.unshift(rec);cart={};save();render();go('orders');toast(rec.sent?'สั่งซื้อสำเร็จ! ร้านได้รับออเดอร์แล้ว':'บันทึกออเดอร์แล้ว (โหมดทดลอง ยังไม่เชื่อมระบบร้าน)');
+  rec.sub=total();rec.ship=ship;rec.st='รอร้านรับออเดอร์';rec.sent=!ENDPOINT;
+  orders.unshift(rec);cart={};save();render();go('orders');toast('สั่งซื้อสำเร็จ! 🎉');
+  if(ENDPOINT)shrinkSend(rec,slipFile);
 }
-const ENDPOINT='https://script.google.com/macros/s/AKfycbyhTaCWQG64bUq4mhVb4OZsEiEKYTxNsG4xhOTzhY7ldZUzTul5obzwHCS_RZpnP7c8CQ/exec',PP='0909601347'; // วาง URL ของ Apps Script ที่ ENDPOINT
+const ENDPOINT='',PP='0909601347'; // วาง URL ของ Apps Script ที่ ENDPOINT
 function crc(s){let c=0xFFFF;for(const ch of s){c^=ch.charCodeAt(0)<<8;for(let i=0;i<8;i++)c=c&0x8000?((c<<1)^0x1021)&0xFFFF:(c<<1)&0xFFFF}return c.toString(16).toUpperCase().padStart(4,'0')}
 function ppPayload(a){const am=a.toFixed(2),s='000201010212'+'2937'+'0016A000000677010111'+'0113'+'0066'+PP.slice(1)+'5303764'+'54'+String(am.length).padStart(2,'0')+am+'5802TH'+'6304';return s+crc(s)}
 function updatePay(){const b=$('#payBox');if(!b)return;const amt=total()+shipFee($('#oWay').value);if(!$('#oPay').value.startsWith('โอน')){b.innerHTML='';return}if(b.dataset.amt==String(amt)&&b.innerHTML)return;b.dataset.amt=amt;
@@ -177,10 +177,25 @@ function renderLoc(){const b=$('#locBox');if(!b)return;if(SHOP.lat==null){b.inne
  const r=loc?(loc.km<=FREE_KM?`<div class="locres">📍 ห่างจากร้าน <b>${loc.km.toFixed(1)} กม.</b> · ส่งฟรี 🎉</div>`:`<div class="locres">📍 ห่างจากร้าน <b>${loc.km.toFixed(1)} กม.</b> · เกินระยะส่งฟรี ${FREE_KM} กม. ค่าส่ง ${fmt(FEE)}</div>`):'';
  b.innerHTML=`<button type="button" class="locbtn" onclick="getLoc()">📍 ${loc?'อัปเดต':'ใช้'}ตำแหน่งของฉัน (เช็กส่งฟรีในระยะ ${FREE_KM} กม.)</button>${r}`}
 function getLoc(){if(!navigator.geolocation){toast('เครื่องนี้ไม่รองรับการระบุตำแหน่ง');return}toast('กำลังหาตำแหน่ง...');navigator.geolocation.getCurrentPosition(p=>{const a=p.coords.latitude,o=p.coords.longitude;loc={lat:a,lng:o,km:distKm(SHOP.lat,SHOP.lng,a,o)};renderLoc();refreshSum()},()=>toast('ขอตำแหน่งไม่สำเร็จ กรุณาอนุญาตตำแหน่งในเบราว์เซอร์แล้วลองใหม่'),{enableHighAccuracy:true,timeout:12000})}
+let loading=false;
+try{const c=JSON.parse(localStorage.getItem('ouan-menu')||'null');if(c&&c.length){MENU.length=0;c.forEach(x=>MENU.push(x));CATS=['ทั้งหมด',...new Set(MENU.map(m=>m.c))]}}catch(e){}
+let outbox=[];try{outbox=JSON.parse(localStorage.getItem('ouan-out')||'[]')}catch(e){}
+function saveOut(){try{localStorage.setItem('ouan-out',JSON.stringify(outbox))}catch(e){}}
+let flushing=false;
+async function flush(){if(flushing||!ENDPOINT||!outbox.length)return;flushing=true;
+ while(outbox.length){const o=outbox[0];try{const r=await fetch(ENDPOINT,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(o)});const j=await r.json();const rec=orders.find(x=>x.no==o.no);if(rec){rec.sent=!!j.ok;if(!j.ok)rec.st='ไม่สำเร็จ: '+(j.error||'กรุณาติดต่อร้าน')}outbox.shift();saveOut();save();renderOrders()}catch(e){break}}
+ flushing=false}
+async function shrinkSend(rec,f){let slip='';try{if(f)slip=await shrink(f)}catch(e){}outbox.push({...rec,slip});saveOut();flush()}
+const STEPS=['รอร้านรับออเดอร์','กำลังทำ','กำลังจัดส่ง','เสร็จสิ้น'];
+async function poll(){if(!ENDPOINT)return;const act=orders.filter(x=>x.sent&&x.st!='เสร็จสิ้น'&&x.st!='ยกเลิก').map(x=>x.no);if(!act.length)return;try{const r=await fetch(ENDPOINT+'?action=status&nos='+act.join(',')+'&t='+Date.now());const j=await r.json();if(j.ok){orders.forEach(x=>{if(j.st[x.no])x.st=j.st[x.no]});save();renderOrders()}}catch(e){}}
+setInterval(()=>{flush();poll()},15000);addEventListener('online',flush);
+const soldOut=m=>m.stock!==''&&m.stock!=null&&Number(m.stock)<=0;
+async function loadMenu(){if(!ENDPOINT)return;try{const r=await fetch(ENDPOINT+'?action=menu&t='+Date.now(),{signal:AbortSignal.timeout?AbortSignal.timeout(8000):undefined});const j=await r.json();if(j.ok&&j.menu&&j.menu.length){MENU.length=0;j.menu.forEach(x=>MENU.push(x));CATS=['ทั้งหมด',...new Set(MENU.map(m=>m.c))];if(!CATS.includes(cat))cat='ทั้งหมด';Object.keys(cart).forEach(k=>{if(!prod(k))delete cart[k]});save();try{localStorage.setItem('ouan-menu',JSON.stringify(MENU))}catch(e){}}}catch(e){}render()}
 function prev(i){const f=i.files[0],p=$('#slipPrev');if(f){p.src=URL.createObjectURL(f);p.hidden=false}}
 function shrink(f){return new Promise((ok,no)=>{const im=new Image();im.onload=()=>{const k=Math.min(1,1000/Math.max(im.width,im.height)),c=document.createElement('canvas');c.width=im.width*k;c.height=im.height*k;c.getContext('2d').drawImage(im,0,0,c.width,c.height);ok(c.toDataURL('image/jpeg',.8))};im.onerror=no;im.src=URL.createObjectURL(f)})}
 function renderOrders(){
-  $('#orders').innerHTML=orders.length?orders.map((o,i)=>`<div class="card"><div class="line"><b>#${o.no} ${o.sent?'✅':''}</b><small>${o.t}</small></div>${o.items.map(x=>`<div class="line"><span>${x.n} ×${x.q}</span><span>${fmt(x.p*x.q)}</span></div>`).join('')}<div class="line"><b>รวม ${fmt(o.sum)}</b><span>${o.way} · ${o.pay}</span></div><button class="cta" style="margin-top:8px;font-size:14px;padding:11px" onclick="copyOrder(${i})">คัดลอกออเดอร์ส่งให้ร้าน</button></div>`).join(''):'<div class="empty"><i>🧾</i>ยังไม่มีออเดอร์</div>';
+  $('#orders').innerHTML=orders.length?orders.map(o=>{const i=STEPS.indexOf(o.st||STEPS[0]),bad=i<0;
+  return `<div class="card"><div class="line"><b>#${o.no}</b><small>${o.t}</small></div><div class="pill ${bad?'bad':''}">${o.st||STEPS[0]}${o.sent?'':' · กำลังส่งให้ร้าน...'}</div>${bad?'':`<div class="steps">${STEPS.map((x,k)=>`<span class="${k<=i?'on':''}">${x.replace('รอร้านรับออเดอร์','รอร้านรับ')}</span>`).join('')}</div>`}${o.items.map(x=>`<div class="line"><span>${x.n} ×${x.q}</span><span>${fmt(x.p*x.q)}</span></div>`).join('')}<div class="line"><span>ค่าขนม</span><span>${fmt(o.sub??o.sum)}</span></div><div class="line"><span>ค่าส่ง (${o.way})</span><span>${o.ship?fmt(o.ship):'ฟรี'}</span></div><div class="line"><b>รวมทั้งหมด</b><b class="price">${fmt(o.sum)}</b></div><small style="color:var(--ink)">${o.pay}${o.km?' · ห่างร้าน '+o.km+' กม.':''}</small></div>`}).join(''):'<div class="empty"><i>🧾</i>ยังไม่มีออเดอร์</div>';
 }
 function copyOrder(i){const o=orders[i];const t=`ออเดอร์ #${o.no}\n${o.items.map(x=>`- ${x.n} ×${x.q}`).join('\n')}\nรวม ${fmt(o.sum)} (${o.way}, ${o.pay})\nชื่อ ${o.name} โทร ${o.tel}\n${o.addr}\n${o.note?'หมายเหตุ: '+o.note:''}`;
   (navigator.clipboard?navigator.clipboard.writeText(t):Promise.reject()).then(()=>toast('คัดลอกแล้ว ส่งให้ร้านทาง LINE ได้เลย')).catch(()=>toast('คัดลอกไม่ได้ ลองกดค้างที่ข้อความ'))}
@@ -190,7 +205,7 @@ $('#bar').onclick=()=>go('cart');
 $('#saveMe').onclick=()=>{me={name:$('#pName').value,tel:$('#pTel').value,addr:$('#pAddr').value};save();toast('บันทึกแล้ว')};
 $('#pName').value=me.name||'';$('#pTel').value=me.tel||'';$('#pAddr').value=me.addr||'';
 document.addEventListener('pointermove',e=>{document.querySelectorAll('.eye').forEach(el=>{const r=el.getBoundingClientRect(),dx=e.clientX-(r.left+r.width/2),dy=e.clientY-(r.top+r.height/2),d=Math.hypot(dx,dy)||1,k=Math.min(8,d/20);el.firstChild.style.transform=`translate(${dx/d*k}px,${dy/d*k}px)`})});
-render();
+render();loadMenu();flush();poll();
 </script>
 </body>
 </html>
