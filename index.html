@@ -76,6 +76,7 @@ nav{border-radius:26px 26px 0 0;border:2.5px solid var(--line);border-bottom:0}
 @media (prefers-reduced-motion:reduce){.toast{transition:none}}
 .pic{overflow:hidden}.pic img{width:100%;height:100%;object-fit:cover}
 .line img{width:34px;height:34px;border-radius:10px;object-fit:cover;vertical-align:middle}.line img{width:30px;height:30px;border-radius:8px;object-fit:cover;vertical-align:middle}
+.trk{margin:10px 0}.trkinfo{background:#eef1ff;border-radius:14px;padding:10px 12px;font-size:14px;line-height:1.6}.trkmap{height:260px;border-radius:16px;margin-top:8px;border:2px solid var(--blue);overflow:hidden;position:relative;z-index:0}.mk{font-size:26px;line-height:34px;text-align:center;filter:drop-shadow(0 2px 2px rgba(0,0,0,.3))}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 </head>
@@ -139,30 +140,31 @@ function ctl(id){const q=cart[id]||0;return q?`<div class="qty"><button class="m
 function render(){
   $('#chips').innerHTML=CATS.map(c=>`<button class="${c==cat?'on':''}" onclick="cat='${c}';render()">${c}</button>`).join('');
   $('#grid').innerHTML=MENU.filter(m=>cat=='ทั้งหมด'||m.c==cat).sort((a,b)=>rank(a)-rank(b)).map(m=>`<div class="item ${soldOut(m)?'out':soon(m)?'sn':''}"><div class="pic">${face(m)}</div><h3>${m.n}</h3><small>${m.d}${m.stock!==''&&m.stock!=null&&m.stock>0&&m.stock<=5?' · เหลือ '+m.stock:''}</small><div class="row"><span class="price">${fmt(m.p)}</span>${soon(m)?'<span class="soon">เร็วๆ นี้ ✨</span>':soldOut(m)?'<span class="sold">หมด</span>':(hasSw(m)?`<button class="add" onclick="askSw(${m.id})" aria-label="เพิ่มลงตะกร้า">+</button>`:ctl(m.id))}</div></div>`).join('');
-  if(loading)$('#grid').innerHTML='<div class="empty" style="grid-column:1/-1"><i>🧁</i>กำลังโหลดเมนู...</div>';const q=count();$('#bar').hidden=!q||$('.view.on').id!='v-menu';$('#barQ').textContent=q+' รายการ · ดูตะกร้า';$('#barT').textContent=fmt(total());
+  $('#grid').insertAdjacentHTML('afterbegin',closedBanner());if(loading)$('#grid').innerHTML='<div class="empty" style="grid-column:1/-1"><i>🧁</i>กำลังโหลดเมนู...</div>';const q=count();$('#bar').hidden=!q||$('.view.on').id!='v-menu';$('#barQ').textContent=q+' รายการ · ดูตะกร้า';$('#barT').textContent=fmt(total());
   renderCart();renderOrders();
 }
 function renderCart(){
   const ids=Object.keys(cart);
   if(!ids.length){$('#cartBody').innerHTML='<div class="empty"><i>🛒</i>ตะกร้ายังว่าง<br>เลือกขนมที่ชอบจากหน้าเมนูได้เลย</div>';return}
   
-  $('#cartBody').innerHTML=`<h2 style="font-size:18px">ตะกร้าของฉัน</h2><div class="card">${ids.map(id=>{const m=prod(id);return `<div class="line"><span>${face(m)} ${m.n}${swOf(id)?' · '+swOf(id):''}<br><small style="color:var(--ink)">${fmt(m.p)}</small></span>${ctl(id)}</div>`}).join('')}</div>
+  $('#cartBody').innerHTML=closedBanner()+`<h2 style="font-size:18px">ตะกร้าของฉัน</h2><div class="card">${ids.map(id=>{const m=prod(id);return `<div class="line"><span>${face(m)} ${m.n}${swOf(id)?' · '+swOf(id):''}<br><small style="color:var(--ink)">${fmt(m.p)}</small></span>${ctl(id)}</div>`}).join('')}</div>
   <div class="card"><div class="line"><span>ค่าขนม</span><span>${fmt(total())}</span></div><div class="line"><span>ค่าส่ง</span><span id="shipV"></span></div><div class="line"><b>รวมทั้งหมด</b><b class="price" id="sumV"></b></div></div>
   <div class="card"><label>ชื่อ</label><input id="oName" value="${me.name||''}"><label>เบอร์โทร</label><input id="oTel" inputmode="tel" value="${me.tel||''}"><label>ที่อยู่จัดส่ง</label><textarea id="oAddr" rows="2">${me.addr||''}</textarea><div id="locBox"></div><label>วิธีรับของ</label><select id="oWay" onchange="refreshSum()"><option>จัดส่ง</option><option>รับที่ร้าน</option></select><label>วิธีชำระเงิน</label><input id="oPay" value="โอนเงิน / พร้อมเพย์" readonly><label>หมายเหตุ</label><input id="oNote" placeholder="เช่น ไม่หวานมาก"><div id="payBox"></div></div>
   <button class="cta" onclick="order()">ยืนยันสั่งซื้อ</button>`;renderLoc();refreshSum();
 }
 async function order(){
   const name=$('#oName').value.trim(),tel=$('#oTel').value.trim(),addr=$('#oAddr').value.trim(),way=$('#oWay').value;
+  if(!SHOP_OPEN){toast(SHOP_MSG||'ร้านปิดรับออเดอร์ชั่วคราว');return}
   if(!name||!tel||(way=='จัดส่ง'&&!addr)){toast('กรอกชื่อ เบอร์โทร และที่อยู่ให้ครบ');return}
   me={name,tel,addr};
-  const items=Object.entries(cart).map(([id,q])=>{const m=prod(id);return {id:m.id,n:m.n+(swOf(id)?' ('+swOf(id)+')':''),q,p:m.p}});
+  const items=Object.entries(cart).map(([id,q])=>{const m=prod(id);return {id:m.id,n:m.n+(swOf(id)?' ('+swOf(id)+')':''),q,p:m.p,sw:swOf(id)}});
   const ship=shipFee(way);
-  const slipFile=$('#oSlip')&&$('#oSlip').files[0],payM=$('#oPay').value;if(payM.startsWith('โอน')&&!slipFile){toast('แนบสลิปโอนเงินก่อน');return}const rec={no:'OU'+String(Date.now()).slice(-5),t:new Date().toLocaleString('th-TH',{dateStyle:'short',timeStyle:'short'}),items,sum:total()+ship,way,pay:payM,note:$('#oNote').value,name,tel,addr,km:loc?+loc.km.toFixed(1):'',map:loc?'https://maps.google.com/?q='+loc.lat+','+loc.lng:''};
+  const slipFile=$('#oSlip')&&$('#oSlip').files[0],payM=$('#oPay').value;if(payM.startsWith('โอน')&&!slipFile){toast('แนบสลิปโอนเงินก่อน');return}const rec={no:'OU'+String(Date.now()).slice(-7),t:new Date().toLocaleString('th-TH',{dateStyle:'short',timeStyle:'short'}),items,sum:total()+ship,way,pay:payM,note:$('#oNote').value,name,tel,addr,km:loc?+loc.km.toFixed(1):'',map:loc?'https://maps.google.com/?q='+loc.lat+','+loc.lng:'',lat:loc?loc.lat:null,lng:loc?loc.lng:null};
   rec.sub=total();rec.ship=ship;rec.st='รอร้านรับออเดอร์';rec.sent=!ENDPOINT;
   orders.unshift(rec);cart={};save();render();go('orders');toast('สั่งซื้อสำเร็จ! 🎉');
   if(ENDPOINT)shrinkSend(rec,slipFile);
 }
-const ENDPOINT='',PP='0909601347'; // วาง URL ของ Apps Script ที่ ENDPOINT
+const ENDPOINT='https://script.google.com/macros/s/AKfycbwUVKhEIvAFMmLlUthbd2F-2thn7T1vnYirdFVCL_vIGRQ1FAWXDxGe0YMQ_sI0L1Kw/exec',PP='0909601347'; // วาง URL ของ Apps Script ที่ ENDPOINT
 function crc(s){let c=0xFFFF;for(const ch of s){c^=ch.charCodeAt(0)<<8;for(let i=0;i<8;i++)c=c&0x8000?((c<<1)^0x1021)&0xFFFF:(c<<1)&0xFFFF}return c.toString(16).toUpperCase().padStart(4,'0')}
 function ppPayload(a){const am=a.toFixed(2),s='000201010212'+'2937'+'0016A000000677010111'+'0113'+'0066'+PP.slice(1)+'5303764'+'54'+String(am.length).padStart(2,'0')+am+'5802TH'+'6304';return s+crc(s)}
 function updatePay(){const b=$('#payBox');if(!b)return;const amt=total()+shipFee($('#oWay').value);if(!$('#oPay').value.startsWith('โอน')){b.innerHTML='';return}if(b.dataset.amt==String(amt)&&b.innerHTML)return;b.dataset.amt=amt;
@@ -173,30 +175,37 @@ const SHOP={lat:13.6518192,lng:100.485199},FREE_KM=5,FEE=25;let loc=null;
 function distKm(a,b,c,d){const r=x=>x*Math.PI/180,h=Math.sin(r(c-a)/2)**2+Math.cos(r(a))*Math.cos(r(c))*Math.sin(r(d-b)/2)**2;return 12742*Math.asin(Math.sqrt(h))}
 function shipFee(way){if(way!='จัดส่ง')return 0;if(SHOP.lat!=null&&loc)return loc.km<=FREE_KM?0:FEE;return total()>=200?0:25}
 function refreshSum(){if(!$('#shipV'))return;const f=shipFee($('#oWay').value);$('#shipV').textContent=f?fmt(f):'ฟรี';$('#sumV').textContent=fmt(total()+f);updatePay()}
+let locState='idle';
 function renderLoc(){const b=$('#locBox');if(!b)return;if(SHOP.lat==null){b.innerHTML='';return}
- const r=loc?(loc.km<=FREE_KM?`<div class="locres">📍 ห่างจากร้าน <b>${loc.km.toFixed(1)} กม.</b> · ส่งฟรี 🎉</div>`:`<div class="locres">📍 ห่างจากร้าน <b>${loc.km.toFixed(1)} กม.</b> · เกินระยะส่งฟรี ${FREE_KM} กม. ค่าส่ง ${fmt(FEE)}</div>`):'';
- b.innerHTML=`<button type="button" class="locbtn" onclick="getLoc()">📍 ${loc?'อัปเดต':'ใช้'}ตำแหน่งของฉัน (เช็กส่งฟรีในระยะ ${FREE_KM} กม.)</button>${r}`}
-function getLoc(){if(!navigator.geolocation){toast('เครื่องนี้ไม่รองรับการระบุตำแหน่ง');return}toast('กำลังหาตำแหน่ง...');navigator.geolocation.getCurrentPosition(p=>{const a=p.coords.latitude,o=p.coords.longitude;loc={lat:a,lng:o,km:distKm(SHOP.lat,SHOP.lng,a,o)};renderLoc();refreshSum()},()=>toast('ขอตำแหน่งไม่สำเร็จ กรุณาอนุญาตตำแหน่งในเบราว์เซอร์แล้วลองใหม่'),{enableHighAccuracy:true,timeout:12000})}
-let loading=false;
+ if(loc){const f=loc.km<=FREE_KM;b.innerHTML=`<div class="locres">📍 ห่างจากร้าน <b>${loc.km.toFixed(1)} กม.</b> · ${f?'ส่งฟรี 🎉':'เกินระยะส่งฟรี '+FREE_KM+' กม. ค่าส่ง '+fmt(FEE)}</div><button type="button" onclick="getLoc()" style="background:none;border:0;color:var(--ink);font:inherit;font-size:12px;text-decoration:underline;padding:4px 0">รีเฟรชตำแหน่ง</button>`;return}
+ if(locState=='wait'){b.innerHTML='<div class="locres">⏳ กำลังหาตำแหน่งของคุณ... (กด "อนุญาต" เพื่อเช็กส่งฟรีในระยะ '+FREE_KM+' กม.)</div>';return}
+ b.innerHTML=`<button type="button" class="locbtn" onclick="getLoc()">📍 ใช้ตำแหน่งของฉัน (เช็กส่งฟรีในระยะ ${FREE_KM} กม.)</button><div style="font-size:12px;margin-top:4px;color:#888">ถ้าไม่มีหน้าต่างขอตำแหน่ง ให้เปิดอนุญาตตำแหน่งของเว็บนี้ในการตั้งค่าเบราว์เซอร์ · ใช้คำนวณค่าส่งเท่านั้น</div>`}
+function getLoc(silent){if(!navigator.geolocation){locState='fail';renderLoc();if(silent!==true)toast('เครื่องนี้ไม่รองรับการระบุตำแหน่ง');return}
+ locState='wait';renderLoc();
+ navigator.geolocation.getCurrentPosition(p=>{const a=p.coords.latitude,o=p.coords.longitude;loc={lat:a,lng:o,km:distKm(SHOP.lat,SHOP.lng,a,o)};locState='ok';renderLoc();refreshSum()},()=>{locState='fail';renderLoc();if(silent!==true)toast('ขอตำแหน่งไม่สำเร็จ กรุณาอนุญาตตำแหน่งในเบราว์เซอร์แล้วลองใหม่')},{enableHighAccuracy:true,timeout:15000,maximumAge:60000})}
+function autoLoc(){if(SHOP.lat==null||!navigator.geolocation)return;
+ if(navigator.permissions&&navigator.permissions.query){navigator.permissions.query({name:'geolocation'}).then(r=>{if(r.state!='denied')getLoc(true);else locState='fail'}).catch(()=>getLoc(true))}else getLoc(true)}
+let loading=false,SHOP_OPEN=true,SHOP_MSG='';
+const closedBanner=()=>SHOP_OPEN?'':`<div class="card" style="grid-column:1/-1;border-color:#c0392b">🔴 <b>ร้านปิดรับออเดอร์ชั่วคราว</b>${SHOP_MSG?'<br>'+SHOP_MSG.replace(/[<>&]/g,''):''}</div>`;
 try{const c=JSON.parse(localStorage.getItem('ouan-menu')||'null');if(c&&c.length){MENU.length=0;c.forEach(x=>MENU.push(x));CATS=['ทั้งหมด',...new Set(MENU.map(m=>m.c))]}}catch(e){}
 let outbox=[];try{outbox=JSON.parse(localStorage.getItem('ouan-out')||'[]')}catch(e){}
 function saveOut(){try{localStorage.setItem('ouan-out',JSON.stringify(outbox))}catch(e){}}
 let flushing=false;
 async function flush(){if(flushing||!ENDPOINT||!outbox.length)return;flushing=true;
- while(outbox.length){const o=outbox[0];try{const r=await fetch(ENDPOINT,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(o)});const j=await r.json();const rec=orders.find(x=>x.no==o.no);if(rec){rec.sent=!!j.ok;if(!j.ok){rec.st='ไม่สำเร็จ: '+(j.error||'กรุณาติดต่อร้าน');loadMenu()}}outbox.shift();saveOut();save();renderOrders()}catch(e){break}}
+ while(outbox.length){const o=outbox[0];try{const r=await fetch(ENDPOINT,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(o)});const j=await r.json();const rec=orders.find(x=>x.no==o.no);if(rec){rec.sent=!!j.ok;if(j.tk)rec.tk=j.tk;if(!j.ok){rec.st='ไม่สำเร็จ: '+(j.error||'กรุณาติดต่อร้าน');loadMenu()}}outbox.shift();saveOut();save();renderOrders()}catch(e){break}}
  flushing=false}
 async function shrinkSend(rec,f){let slip='';try{if(f)slip=await shrink(f)}catch(e){}outbox.push({...rec,slip});saveOut();flush()}
 const STEPS=['รอร้านรับออเดอร์','กำลังทำ','กำลังจัดส่ง','เสร็จสิ้น'];
 async function poll(){if(!ENDPOINT)return;const act=orders.filter(x=>x.sent&&x.st!='เสร็จสิ้น'&&x.st!='ยกเลิก').map(x=>x.no);if(!act.length)return;try{const r=await fetch(ENDPOINT+'?action=status&nos='+act.join(',')+'&t='+Date.now());const j=await r.json();if(j.ok){orders.forEach(x=>{if(j.st[x.no])x.st=j.st[x.no]});save();renderOrders()}}catch(e){}}
-setInterval(()=>{flush();poll()},15000);setInterval(()=>{if(!document.hidden)loadMenu()},3000);document.addEventListener('visibilitychange',()=>{if(!document.hidden){loadMenu();poll()}});addEventListener('online',flush);
+setInterval(()=>{flush();poll()},15000);setInterval(()=>{if(!document.hidden)loadMenu()},20000);document.addEventListener('visibilitychange',()=>{if(!document.hidden){loadMenu();poll()}});addEventListener('online',flush);
 const soldOut=m=>m.st=='หมด'||(m.stock!==''&&m.stock!=null&&Number(m.stock)<=0),soon=m=>m.st=='เร็วๆนี้'&&!soldOut(m),rank=m=>soldOut(m)?2:soon(m)?1:0;
 let lmBusy=false;
-async function loadMenu(){if(!ENDPOINT||lmBusy)return;lmBusy=true;try{const r=await fetch(ENDPOINT+'?action=menu&t='+Date.now(),{signal:AbortSignal.timeout?AbortSignal.timeout(8000):undefined});const j=await r.json();if(!(j.ok&&j.menu&&j.menu.length)||JSON.stringify(j.menu)==JSON.stringify(MENU))return;MENU.length=0;j.menu.forEach(x=>MENU.push(x));CATS=['ทั้งหมด',...new Set(MENU.map(m=>m.c))];if(!CATS.includes(cat))cat='ทั้งหมด';Object.keys(cart).forEach(k=>{if(!prod(k))delete cart[k]});save();try{localStorage.setItem('ouan-menu',JSON.stringify(MENU))}catch(e){}if(!$('#v-cart').classList.contains('on'))render()}catch(e){}finally{lmBusy=false}}
+async function loadMenu(){if(!ENDPOINT||lmBusy)return;lmBusy=true;try{const r=await fetch(ENDPOINT+'?action=menu&t='+Date.now(),{signal:AbortSignal.timeout?AbortSignal.timeout(8000):undefined});const j=await r.json();if(j.ok&&j.shop){const ch=SHOP_OPEN!==j.shop.open||SHOP_MSG!==j.shop.msg;SHOP_OPEN=j.shop.open;SHOP_MSG=j.shop.msg||'';if(ch&&!$('#v-cart').classList.contains('on'))render()}if(!(j.ok&&j.menu&&j.menu.length)||JSON.stringify(j.menu)==JSON.stringify(MENU))return;MENU.length=0;j.menu.forEach(x=>MENU.push(x));CATS=['ทั้งหมด',...new Set(MENU.map(m=>m.c))];if(!CATS.includes(cat))cat='ทั้งหมด';Object.keys(cart).forEach(k=>{if(!prod(k))delete cart[k]});save();try{localStorage.setItem('ouan-menu',JSON.stringify(MENU))}catch(e){}if(!$('#v-cart').classList.contains('on'))render()}catch(e){}finally{lmBusy=false}}
 function prev(i){const f=i.files[0],p=$('#slipPrev');if(f){p.src=URL.createObjectURL(f);p.hidden=false}}
 function shrink(f){return new Promise((ok,no)=>{const im=new Image();im.onload=()=>{const k=Math.min(1,1000/Math.max(im.width,im.height)),c=document.createElement('canvas');c.width=im.width*k;c.height=im.height*k;c.getContext('2d').drawImage(im,0,0,c.width,c.height);ok(c.toDataURL('image/jpeg',.8))};im.onerror=no;im.src=URL.createObjectURL(f)})}
 function renderOrders(){
   $('#orders').innerHTML=orders.length?orders.map(o=>{const i=STEPS.indexOf(o.st||STEPS[0]),bad=i<0;
-  return `<div class="card"><div class="line"><b>#${o.no}</b><small>${o.t}</small></div><div class="pill ${bad?'bad':''}">${o.st||STEPS[0]}${o.sent?'':' · กำลังส่งให้ร้าน...'}</div>${bad?'':`<div class="steps">${STEPS.map((x,k)=>`<span class="${k<=i?'on':''}">${x.replace('รอร้านรับออเดอร์','รอร้านรับ')}</span>`).join('')}</div>`}${o.items.map(x=>`<div class="line"><span>${x.n} ×${x.q}</span><span>${fmt(x.p*x.q)}</span></div>`).join('')}<div class="line"><span>ค่าขนม</span><span>${fmt(o.sub??o.sum)}</span></div><div class="line"><span>ค่าส่ง (${o.way})</span><span>${o.ship?fmt(o.ship):'ฟรี'}</span></div><div class="line"><b>รวมทั้งหมด</b><b class="price">${fmt(o.sum)}</b></div><small style="color:var(--ink)">${o.pay}${o.km?' · ห่างร้าน '+o.km+' กม.':''}</small></div>`}).join(''):'<div class="empty"><i>🧾</i>ยังไม่มีออเดอร์</div>';
+  return `<div class="card"><div class="line"><b>#${o.no}</b><small>${o.t}</small></div><div class="pill ${bad?'bad':''}">${o.st||STEPS[0]}${o.sent?'':' · กำลังส่งให้ร้าน...'}</div>${bad?'':`<div class="steps">${STEPS.map((x,k)=>`<span class="${k<=i?'on':''}">${x.replace('รอร้านรับออเดอร์','รอร้านรับ')}</span>`).join('')}</div>`}${trkSlot(o)}${o.items.map(x=>`<div class="line"><span>${x.n} ×${x.q}</span><span>${fmt(x.p*x.q)}</span></div>`).join('')}<div class="line"><span>ค่าขนม</span><span>${fmt(o.sub??o.sum)}</span></div><div class="line"><span>ค่าส่ง (${o.way})</span><span>${o.ship?fmt(o.ship):'ฟรี'}</span></div><div class="line"><b>รวมทั้งหมด</b><b class="price">${fmt(o.sum)}</b></div><small style="color:var(--ink)">${o.pay}${o.km?' · ห่างร้าน '+o.km+' กม.':''}</small></div>`}).join(''):'<div class="empty"><i>🧾</i>ยังไม่มีออเดอร์</div>';trkAttach();
 }
 function copyOrder(i){const o=orders[i];const t=`ออเดอร์ #${o.no}\n${o.items.map(x=>`- ${x.n} ×${x.q}`).join('\n')}\nรวม ${fmt(o.sum)} (${o.way}, ${o.pay})\nชื่อ ${o.name} โทร ${o.tel}\n${o.addr}\n${o.note?'หมายเหตุ: '+o.note:''}`;
   (navigator.clipboard?navigator.clipboard.writeText(t):Promise.reject()).then(()=>toast('คัดลอกแล้ว ส่งให้ร้านทาง LINE ได้เลย')).catch(()=>toast('คัดลอกไม่ได้ ลองกดค้างที่ข้อความ'))}
@@ -206,7 +215,34 @@ $('#bar').onclick=()=>go('cart');
 $('#saveMe').onclick=()=>{me={name:$('#pName').value,tel:$('#pTel').value,addr:$('#pAddr').value};save();toast('บันทึกแล้ว')};
 $('#pName').value=me.name||'';$('#pTel').value=me.tel||'';$('#pAddr').value=me.addr||'';
 document.addEventListener('pointermove',e=>{document.querySelectorAll('.eye').forEach(el=>{const r=el.getBoundingClientRect(),dx=e.clientX-(r.left+r.width/2),dy=e.clientY-(r.top+r.height/2),d=Math.hypot(dx,dy)||1,k=Math.min(8,d/20);el.firstChild.style.transform=`translate(${dx/d*k}px,${dy/d*k}px)`})});
-render();loadMenu();flush();poll();
+
+/* ===== ติดตามไรเดอร์แบบเรียลไทม์ ===== */
+const TRK={};let LF=null,trkLast=0,trkBusy=false;
+function trkSlot(o){return o.st=='กำลังจัดส่ง'&&o.tk&&o.way=='จัดส่ง'?`<div class="trkslot" data-no="${o.no}"></div>`:''}
+function loadLeaflet(){return LF||(LF=new Promise((ok,no)=>{const l=document.createElement('link');l.rel='stylesheet';l.href='https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css';document.head.appendChild(l);const sc=document.createElement('script');sc.src='https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js';sc.onload=ok;sc.onerror=()=>{LF=null;no()};document.head.appendChild(sc)}))}
+function trkNode(no){if(!TRK[no]){const el=document.createElement('div');el.className='trk';el.innerHTML='<div class="trkinfo">🛵 ร้านกำลังนำของไปส่ง — รอสัญญาณตำแหน่งจากไรเดอร์...</div><div class="trkmap" hidden></div>';TRK[no]={el,info:el.firstChild,mapEl:el.lastChild,map:null}}return TRK[no]}
+function trkAttach(){const live=new Set();
+ document.querySelectorAll('.trkslot').forEach(sl=>{const no=sl.dataset.no;live.add(no);const t=trkNode(no);sl.appendChild(t.el);if(t.map)setTimeout(()=>t.map.invalidateSize(),60)});
+ Object.keys(TRK).forEach(no=>{if(!live.has(no)){try{TRK[no].map&&TRK[no].map.remove()}catch(e){}delete TRK[no]}});
+ if(live.size)trkPoll()}
+async function trkPoll(){if(document.hidden||!ENDPOINT||trkBusy||Date.now()-trkLast<4000)return;trkBusy=true;trkLast=Date.now();
+ try{for(const no of Object.keys(TRK)){const o=orders.find(x=>x.no==no);if(!o||!o.tk)continue;
+  const r=await fetch(ENDPOINT+'?action=track&no='+encodeURIComponent(no)+'&tk='+encodeURIComponent(o.tk)+'&t='+Date.now());const j=await r.json();if(j.ok)trkShow(no,o,j.loc)}}catch(e){}finally{trkBusy=false}}
+function trkShow(no,o,loc){const t=TRK[no];if(!t)return;
+ if(!loc){t.info.innerHTML='🛵 ร้านกำลังนำของไปส่ง — รอสัญญาณตำแหน่งจากไรเดอร์...';return}
+ const age=Math.max(0,Math.round((Date.now()-loc.t)/1000)),has=o.lat!=null&&o.lng!=null,d=has?distKm(loc.lat,loc.lng,o.lat,o.lng):null;
+ const dTxt=d==null?'':d<1?Math.max(10,Math.round(d*100)*10)+' ม.':d.toFixed(1)+' กม.',eta=d==null?0:Math.max(1,Math.round(d/20*60));
+ t.info.innerHTML=age>90?`⚠️ สัญญาณไรเดอร์ล่าสุดเมื่อ ${age>=120?Math.round(age/60)+' นาที':'ไม่กี่วินาที'}ที่แล้ว (อาจอยู่ในจุดอับสัญญาณ)`:`🛵 <b>ไรเดอร์กำลังมาหาคุณ</b>${d!=null?`<br>ห่างประมาณ <b>${dTxt}</b> · ถึงในราว <b>${eta} นาที</b>`:''}<br><small style="color:var(--ink)">อัปเดตเมื่อ ${age} วิที่แล้ว</small>`;
+ t.mapEl.hidden=false;
+ loadLeaflet().then(()=>{if(!TRK[no])return;
+  if(!t.map){t.map=L.map(t.mapEl,{attributionControl:true}).setView([loc.lat,loc.lng],15);L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'}).addTo(t.map);
+   const ic=e=>L.divIcon({html:'<div class="mk">'+e+'</div>',className:'',iconSize:[34,34],iconAnchor:[17,17]});
+   t.rider=L.marker([loc.lat,loc.lng],{icon:ic('🛵'),zIndexOffset:1000}).addTo(t.map);if(has)t.me=L.marker([o.lat,o.lng],{icon:ic('🏠')}).addTo(t.map);t.fit=true}
+  t.rider.setLatLng([loc.lat,loc.lng]);
+  if(t.fit||!t.map.getBounds().contains([loc.lat,loc.lng])){const pts=[[loc.lat,loc.lng]];if(has)pts.push([o.lat,o.lng]);t.map.fitBounds(pts,{padding:[40,40],maxZoom:17});t.fit=false}
+  t.map.invalidateSize()}).catch(()=>{t.info.innerHTML+='<br><small>โหลดแผนที่ไม่สำเร็จ แต่ยังเห็นระยะทางได้</small>'})}
+setInterval(trkPoll,10000);
+render();loadMenu();flush();poll();autoLoc();
 </script>
 </body>
 </html>
