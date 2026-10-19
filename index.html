@@ -220,7 +220,7 @@ async function order(){
   orders.unshift(rec);cart={};save();render();go('orders');toast('สั่งซื้อสำเร็จ! 🎉');
   if(ENDPOINT)shrinkSend(rec,slipFile);
 }
-const ENDPOINT='https://script.google.com/macros/s/AKfycbysla8pwwW27pc5Lucr4aNrd72Fi1g-dN4Vg4VgiXQPYtYdmesbIV4VdatovC7Lg0mw/exec',PP='0909601347'; // วาง URL ของ Apps Script ที่ ENDPOINT
+const ENDPOINT='https://script.google.com/macros/s/AKfycbziyyX069fx1NyRGMTYitCJLf54iDEE8Jj31z7IPHrqPsnPqy34qkGJlDNhE4rstv8m/exec',PP='0909601347'; // วาง URL ของ Apps Script ที่ ENDPOINT
 function crc(s){let c=0xFFFF;for(const ch of s){c^=ch.charCodeAt(0)<<8;for(let i=0;i<8;i++)c=c&0x8000?((c<<1)^0x1021)&0xFFFF:(c<<1)&0xFFFF}return c.toString(16).toUpperCase().padStart(4,'0')}
 function ppPayload(a){const am=a.toFixed(2),s='000201010212'+'2937'+'0016A000000677010111'+'0113'+'0066'+PP.slice(1)+'5303764'+'54'+String(am.length).padStart(2,'0')+am+'5802TH'+'6304';return s+crc(s)}
 function updatePay(){const b=$('#payBox');if(!b)return;const amt=total()+shipFee($('#oWay').value);if(!$('#oPay').value.startsWith('โอน')){b.innerHTML='';return}if(b.dataset.amt==String(amt)&&b.innerHTML)return;b.dataset.amt=amt;
@@ -252,7 +252,7 @@ async function flush(){if(flushing||!ENDPOINT||!outbox.length)return;flushing=tr
  flushing=false}
 async function shrinkSend(rec,f){let slip='';try{if(f)slip=await shrink(f)}catch(e){}outbox.push({...rec,slip});saveOut();flush()}
 const STEPS=['รอร้านรับออเดอร์','กำลังทำ','กำลังจัดส่ง','เสร็จสิ้น'];
-async function poll(){if(!ENDPOINT)return;const act=orders.filter(x=>x.sent&&x.st!='เสร็จสิ้น'&&x.st!='ยกเลิก').map(x=>x.no);if(!act.length)return;try{const r=await fetch(ENDPOINT+'?action=status&nos='+act.join(',')+'&t='+Date.now());const j=await r.json();if(j.ok){orders.forEach(x=>{if(j.st[x.no])x.st=j.st[x.no]});save();renderOrders()}}catch(e){}}
+async function poll(){if(!ENDPOINT)return;const full=Date.now()-LASTFULL>60000;if(full)LASTFULL=Date.now();const act=orders.filter(x=>x.sent&&x.st!='เสร็จสิ้น'&&x.st!='ยกเลิก'&&(full||!FBLIVE[x.no])).map(x=>x.no);if(!act.length)return;try{const r=await fetch(ENDPOINT+'?action=status&nos='+act.join(',')+'&t='+Date.now());const j=await r.json();if(j.ok){orders.forEach(x=>{if(j.st[x.no])x.st=j.st[x.no]});save();renderOrders()}}catch(e){}}
 setInterval(()=>{flush();poll()},15000);setInterval(()=>{if(!document.hidden)loadMenu()},20000);document.addEventListener('visibilitychange',()=>{if(!document.hidden){loadMenu();poll()}});addEventListener('online',flush);
 const soldOut=m=>m.st=='หมด'||(m.stock!==''&&m.stock!=null&&Number(m.stock)<=0),soon=m=>m.st=='เร็วๆนี้'&&!soldOut(m),rank=m=>soldOut(m)?2:soon(m)?1:0;
 let lmBusy=false;
@@ -292,7 +292,7 @@ function trkAttach(){const live=new Set();
  Object.keys(TRK).forEach(no=>{if(!live.has(no)){try{TRK[no].map&&TRK[no].map.remove()}catch(e){}delete TRK[no]}});
  if(live.size)trkPoll()}
 async function trkPoll(){if(document.hidden||!ENDPOINT||trkBusy||Date.now()-trkLast<4000)return;trkBusy=true;trkLast=Date.now();
- try{for(const no of Object.keys(TRK)){const o=orders.find(x=>x.no==no);if(!o||!o.tk)continue;
+ try{for(const no of Object.keys(TRK)){const o=orders.find(x=>x.no==no);if(!o||!o.tk||FBLIVE[no])continue;
   const r=await fetch(ENDPOINT+'?action=track&no='+encodeURIComponent(no)+'&tk='+encodeURIComponent(o.tk)+'&t='+Date.now());const j=await r.json();if(j.ok)trkShow(no,o,j.loc)}}catch(e){}finally{trkBusy=false}}
 function trkShow(no,o,loc){const t=TRK[no];if(!t)return;
  if(!loc){t.info.innerHTML='🛵 ร้านกำลังนำของไปส่ง — รอสัญญาณตำแหน่งจากไรเดอร์...';return}
@@ -308,6 +308,34 @@ function trkShow(no,o,loc){const t=TRK[no];if(!t)return;
   if(t.fit||!t.map.getBounds().contains([loc.lat,loc.lng])){const pts=[[loc.lat,loc.lng]];if(has)pts.push([o.lat,o.lng]);t.map.fitBounds(pts,{padding:[40,40],maxZoom:17});t.fit=false}
   t.map.invalidateSize()}).catch(()=>{t.info.innerHTML+='<br><small>โหลดแผนที่ไม่สำเร็จ แต่ยังเห็นระยะทางได้</small>'})}
 setInterval(trkPoll,10000);
+const FB_URL='https://ouan-e1955-default-rtdb.asia-southeast1.firebasedatabase.app/'; // ใส่ URL Firebase Realtime Database เช่น https://ouan-xxxx-default-rtdb.asia-southeast1.firebasedatabase.app (เว้นว่าง = ใช้แบบดึงข้อมูลเป็นรอบเหมือนเดิม)
+function fbSub(path,cb,st){ // ฟังข้อมูลแบบเรียลไทม์ผ่าน EventSource (ไม่ต้องใช้ SDK) ต่อใหม่เองเมื่อหลุด
+ if(!FB_URL||!window.EventSource)return null;
+ let es=null,dead=false,data=null,wait=1000,tm=null;
+ const apply=(p,d,merge)=>{const ks=String(p||'/').split('/').filter(Boolean),mg=(a,b)=>merge&&a&&typeof a=='object'&&b&&typeof b=='object'?Object.assign({},a,b):b;
+  if(!ks.length){data=mg(data,d);return}
+  if(!data||typeof data!='object')data={};
+  if(d===null)delete data[ks[0]];else data[ks[0]]=mg(data[ks[0]],d)};
+ const open=()=>{if(dead)return;
+  es=new EventSource(FB_URL.replace(/\/$/,'')+'/'+path+'.json');
+  es.onopen=()=>{wait=1000};
+  ['put','patch'].forEach(ev=>es.addEventListener(ev,e=>{try{const m=JSON.parse(e.data);apply(m.path,m.data,ev=='patch');st&&st(true);cb(data)}catch(x){}}));
+  es.onerror=()=>{st&&st(false);try{es.close()}catch(x){}es=null;if(!dead){tm=setTimeout(open,wait);wait=Math.min(wait*2,30000)}}};
+ open();
+ return{close(){dead=true;clearTimeout(tm);if(es)try{es.close()}catch(x){}es=null;st&&st(false)}}}
+var FBS={},FBLIVE={},LASTLOC={},LASTFULL=0;
+function fbOrder(no,d){const o=orders.find(x=>x.no==no);if(!o||!d||typeof d!='object')return;
+ if(d.st&&d.st!==o.st&&(STEPS.includes(d.st)||d.st=='ยกเลิก')){o.st=d.st;save();renderOrders()}
+ if(d.st=='กำลังจัดส่ง'&&d.lat!=null&&d.lng!=null){const loc={lat:+d.lat,lng:+d.lng,t:+d.lt||Date.now()};LASTLOC[no]=loc;if(TRK[no])trkShow(no,o,loc)}else delete LASTLOC[no]}
+function fbSync(){ // ต่อ Firebase เฉพาะออเดอร์ที่ยังไม่จบ และตอนที่หน้าจอเปิดอยู่ (ประหยัดโควตา 100 การเชื่อมต่อ)
+ const want=new Set(!FB_URL||document.hidden?[]:orders.filter(x=>x.sent&&x.tk&&x.st!='เสร็จสิ้น'&&x.st!='ยกเลิก'&&!/^ไม่สำเร็จ/.test(x.st||'')).map(x=>x.no));
+ Object.keys(FBS).forEach(no=>{if(!want.has(no)){FBS[no].close();delete FBS[no];delete FBLIVE[no];delete LASTLOC[no]}});
+ want.forEach(no=>{if(FBS[no])return;const o=orders.find(x=>x.no==no);FBS[no]=fbSub('t/'+o.tk,d=>fbOrder(no,d),v=>{FBLIVE[no]=v})})}
+{const _ro=renderOrders;renderOrders=function(){_ro.apply(this,arguments);fbSync()}}
+document.addEventListener('visibilitychange',fbSync);
+setInterval(()=>{if(document.hidden)return;Object.keys(LASTLOC).forEach(no=>{const o=orders.find(x=>x.no==no);if(o&&TRK[no])trkShow(no,o,LASTLOC[no])})},4000);
+fbSync();
+
 const CONSENT_V='2026-10-19';let consented=false,consentAt='';
 try{const cs=JSON.parse(localStorage.getItem('ouan-consent')||'null');if(cs&&cs.v===CONSENT_V){consented=true;consentAt=cs.t||''}}catch(e){}
 render();loadMenu();flush();poll();if(consented)autoLoc();
