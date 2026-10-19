@@ -220,7 +220,7 @@ async function order(){
   orders.unshift(rec);cart={};save();render();go('orders');toast('สั่งซื้อสำเร็จ! 🎉');
   if(ENDPOINT)shrinkSend(rec,slipFile);
 }
-const ENDPOINT='https://script.google.com/macros/s/AKfycbyc4NrHabFt8V3GH6HkWNkTIKvNqNhUEANUrzxGMXiiATKx1ng7HpayWujsfHPXFTT9/exec',PP='0909601347'; // วาง URL ของ Apps Script ที่ ENDPOINT
+const ENDPOINT='https://script.google.com/macros/s/AKfycbysla8pwwW27pc5Lucr4aNrd72Fi1g-dN4Vg4VgiXQPYtYdmesbIV4VdatovC7Lg0mw/exec',PP='0909601347'; // วาง URL ของ Apps Script ที่ ENDPOINT
 function crc(s){let c=0xFFFF;for(const ch of s){c^=ch.charCodeAt(0)<<8;for(let i=0;i<8;i++)c=c&0x8000?((c<<1)^0x1021)&0xFFFF:(c<<1)&0xFFFF}return c.toString(16).toUpperCase().padStart(4,'0')}
 function ppPayload(a){const am=a.toFixed(2),s='000201010212'+'2937'+'0016A000000677010111'+'0113'+'0066'+PP.slice(1)+'5303764'+'54'+String(am.length).padStart(2,'0')+am+'5802TH'+'6304';return s+crc(s)}
 function updatePay(){const b=$('#payBox');if(!b)return;const amt=total()+shipFee($('#oWay').value);if(!$('#oPay').value.startsWith('โอน')){b.innerHTML='';return}if(b.dataset.amt==String(amt)&&b.innerHTML)return;b.dataset.amt=amt;
