@@ -24,8 +24,8 @@ header p{margin:2px 0 0;font-size:13px;color:var(--ink)}
 .chips button{flex:none;border:2px solid var(--line);background:var(--card);color:var(--text);font:inherit;font-size:14px;padding:8px 16px;border-radius:99px}
 .chips button.on{background:var(--blue);border-color:var(--blue);color:#fff}
 .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:4px 18px}
-#gate{position:fixed;inset:0;z-index:9999;background:var(--bg);display:flex;align-items:center;justify-content:center;text-align:center;padding:max(24px,env(safe-area-inset-top)) 24px max(24px,env(safe-area-inset-bottom));transition:opacity .45s}
-#gate.out{opacity:0;pointer-events:none}#gate[hidden]{display:none}#gate .gbox{max-width:340px;width:100%}
+#gate{position:fixed;inset:0;z-index:9999;background:var(--bg);display:flex;overflow-y:auto;text-align:center;padding:max(24px,env(safe-area-inset-top)) 24px max(24px,env(safe-area-inset-bottom));transition:opacity .45s}
+#gate.out{opacity:0;pointer-events:none}#gate[hidden]{display:none}#gate .gbox{max-width:360px;width:100%;margin:auto}#gate .gst{text-align:left;background:var(--soft);border-radius:14px;padding:10px 14px;margin:10px 0;font-size:13px;line-height:1.7;color:var(--text,#2b2f45)}#gate .gst ol{margin:4px 0 0;padding-left:20px}#gate .gst small{color:var(--ink)}
 #gate .glogo{width:120px;height:120px;border-radius:30px;object-fit:cover;border:3px solid var(--sun);box-shadow:4px 5px 0 var(--blue);animation:gpop 1.6s ease-in-out infinite alternate}@keyframes gpop{to{transform:translateY(-8px) rotate(-2deg)}}
 #gate h2{margin:22px 0 6px;color:var(--blue);font-size:21px}#gate p{margin:0 0 14px;color:var(--ink);line-height:1.7;font-size:14px}
 #gate .gdots{display:flex;gap:8px;justify-content:center;margin:16px 0 4px}#gate .gdots i{width:11px;height:11px;border-radius:50%;background:var(--blue);animation:gd 1s infinite ease-in-out}#gate .gdots i:nth-child(2){animation-delay:.15s;background:var(--sun)}#gate .gdots i:nth-child(3){animation-delay:.3s}@keyframes gd{0%,80%,100%{transform:scale(.5);opacity:.4}40%{transform:scale(1);opacity:1}}
@@ -268,12 +268,20 @@ setInterval(trkPoll,10000);
 render();loadMenu();flush();poll();autoLoc();
 /* ===== หน้าจอรอก่อนเข้าร้าน: ต้องอนุญาตตำแหน่ง + โหลดเมนูเสร็จ ===== */
 let locErr=0,gateOpen=false;
+function permSteps(onlyInapp){const ua=navigator.userAgent||'',ios=/iPhone|iPad|iPod/.test(ua)||(navigator.platform=='MacIntel'&&navigator.maxTouchPoints>1),and=/Android/i.test(ua),crios=/CriOS/.test(ua),inapp=/Line\/|FBAN|FBAV|Instagram|MicroMessenger/i.test(ua);
+ let h=inapp?'<div class="gst"><b>⚠️ ตอนนี้เปิดจากในแอป (LINE / Facebook / Instagram)</b><br>แอปพวกนี้มักบล็อกตำแหน่ง กดเมนู ⋯ แล้วเลือก <b>เปิดในเบราว์เซอร์</b> (Safari หรือ Chrome) แล้วลองใหม่</div>':'';
+ if(onlyInapp)return h;
+ if(ios&&crios)h+='<div class="gst"><b>📱 iPhone (Chrome)</b><ol><li>เปิด <b>การตั้งค่า</b> ของเครื่อง</li><li>เลื่อนหา <b>Chrome</b> → <b>ตำแหน่งที่ตั้ง</b></li><li>เลือก <b>ขณะใช้แอป</b></li><li>กลับมาที่หน้านี้ แล้วกด "ลองอีกครั้ง"</li></ol></div>';
+ else if(ios)h+='<div class="gst"><b>📱 iPhone (Safari)</b><ol><li>กด <b>ᴀA</b> ที่ด้านซ้ายของแถบที่อยู่เว็บ</li><li>เลือก <b>การตั้งค่าเว็บไซต์</b></li><li>ที่ <b>ตำแหน่งที่ตั้ง</b> เลือก <b>อนุญาต</b></li><li>กลับมาที่หน้านี้ แล้วกด "ลองอีกครั้ง"</li></ol><small>ถ้ายังไม่ได้: การตั้งค่า → ความเป็นส่วนตัวและความปลอดภัย → บริการตำแหน่งที่ตั้ง ต้องเปิดอยู่ และ Safari เว็บไซต์ ต้องเป็น "ขณะใช้แอป"</small></div>';
+ else if(and)h+='<div class="gst"><b>🤖 Android (Chrome)</b><ol><li>กดไอคอนตั้งค่า (🔒 หรือ ⚙) ที่ด้านซ้ายของแถบที่อยู่เว็บ</li><li>เลือก <b>สิทธิ์</b> → <b>ตำแหน่ง</b></li><li>เลือก <b>อนุญาต</b></li><li>กลับมาที่หน้านี้ แล้วกด "ลองอีกครั้ง"</li></ol><small>ถ้ายังไม่ได้: ลากแถบแจ้งเตือนด้านบนลงมา แล้วเปิด <b>ตำแหน่ง (GPS)</b> ของเครื่อง</small></div>';
+ else h+='<div class="gst"><b>💻 คอมพิวเตอร์</b><ol><li>คลิกไอคอนกุญแจ/ตั้งค่าข้างที่อยู่เว็บ</li><li>เปิดสิทธิ์ <b>ตำแหน่ง</b> เป็นอนุญาต</li><li>รีเฟรชหน้านี้</li></ol></div>';
+ return h}
 function gateUpdate(){if(gateOpen)return;const g=$('#gate'),T=$('#gT'),P=$('#gP'),B=$('#gB'),L=$('#gL');
  const need=SHOP.lat!=null,noGeo=need&&!navigator.geolocation,bad=need&&(locState=='fail'||noGeo),ok=!need||locState=='ok';
  if(ok&&!loading){gateOpen=true;g.classList.add('out');setTimeout(()=>{g.hidden=true},500);return}
  if(bad){L.hidden=true;B.hidden=false;
-  if(noGeo){T.textContent='เครื่องนี้ไม่รองรับการระบุตำแหน่ง';P.textContent='ลองเปิดเว็บนี้ด้วย Safari หรือ Chrome แล้วลองใหม่อีกครั้ง'}
-  else if(locErr==1||locErr==0){T.textContent='ต้องอนุญาตตำแหน่งก่อนถึงจะสั่งขนมได้นะ';P.innerHTML='ร้านใช้ตำแหน่งเพื่อเช็กระยะส่งและนำขนมไปส่งถึงบ้านคุณ<br>กด "ลองอีกครั้ง" แล้วเลือก <b>อนุญาต</b><br><small>ถ้าหน้าต่างไม่ขึ้น ให้เปิดอนุญาตตำแหน่งของเว็บนี้ในการตั้งค่าเบราว์เซอร์หรือโทรศัพท์ก่อน</small>'}
+  if(noGeo){T.textContent='เครื่องนี้ไม่รองรับการระบุตำแหน่ง';P.innerHTML='ลองเปิดเว็บนี้ด้วย Safari หรือ Chrome แล้วลองใหม่อีกครั้ง'+permSteps(true)}
+  else if(locErr==1||locErr==0){T.textContent='ต้องอนุญาตตำแหน่งก่อนถึงจะสั่งขนมได้นะ';P.innerHTML='ร้านใช้ตำแหน่งเพื่อเช็กระยะส่งและนำขนมไปส่งถึงบ้านคุณ<br>กด "ลองอีกครั้ง" แล้วเลือก <b>อนุญาต</b><br><small>ถ้าหน้าต่างไม่ขึ้น ให้เปิดอนุญาตตามขั้นตอนนี้ก่อน</small>'+permSteps()}
   else{T.textContent='ยังหาตำแหน่งของคุณไม่เจอ';P.textContent='ลองเปิด GPS หรือออกไปที่โล่ง แล้วกดลองอีกครั้ง'}
   return}
  L.hidden=false;B.hidden=true;
