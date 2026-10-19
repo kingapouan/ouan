@@ -24,6 +24,8 @@ header p{margin:2px 0 0;font-size:13px;color:var(--ink)}
 .chips button{flex:none;border:2px solid var(--line);background:var(--card);color:var(--text);font:inherit;font-size:14px;padding:8px 16px;border-radius:99px}
 .chips button.on{background:var(--blue);border-color:var(--blue);color:#fff}
 .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:4px 18px}
+.ldg{grid-column:1/-1;text-align:center;color:var(--ink);font-weight:600;padding:6px 0}.ldg i{display:block;font-style:normal;font-size:44px;animation:hop .7s ease-in-out infinite alternate}@keyframes hop{to{transform:translateY(-12px) rotate(8deg)}}
+.sk{height:250px;border-radius:22px;border:2.5px solid var(--line);background:linear-gradient(90deg,#f6f1dc 25%,#fffaf0 50%,#f6f1dc 75%);background-size:200% 100%;animation:shm 1.2s linear infinite}@keyframes shm{to{background-position:-200% 0}}
 .item{background:var(--card);border:2px solid var(--line);border-radius:22px;padding:12px;display:flex;flex-direction:column}
 .pic{height:88px;border-radius:16px;background:var(--soft);display:grid;place-items:center;font-size:48px}
 .item h3{margin:10px 0 2px;font-size:15px}.item small{color:var(--ink);font-size:12px;flex:1}
@@ -131,6 +133,8 @@ let CATS=['ทั้งหมด',...new Set(MENU.map(m=>m.c))];
 let cat='ทั้งหมด',cart={},orders=[],me={};
 const $=s=>document.querySelector(s),fmt=n=>'฿'+n.toLocaleString('th-TH');
 try{cart=JSON.parse(localStorage.getItem('ouan-cart')||'{}');orders=JSON.parse(localStorage.getItem('ouan-orders')||'[]');me=JSON.parse(localStorage.getItem('ouan-me')||'{}')}catch(e){}
+/* เข้าเว็บใหม่ = ไม่โชว์ออเดอร์เก่าที่จบแล้ว/ค้างเกิน 24 ชม. */
+orders=(Array.isArray(orders)?orders:[]).filter(o=>o&&!['เสร็จสิ้น','ยกเลิก'].includes(o.st)&&!String(o.st||'').startsWith('ไม่สำเร็จ')&&!(o.ts&&Date.now()-o.ts>864e5));
 function save(){try{localStorage.setItem('ouan-cart',JSON.stringify(cart));localStorage.setItem('ouan-orders',JSON.stringify(orders));localStorage.setItem('ouan-me',JSON.stringify(me))}catch(e){}}
 function toast(t){const el=$('#toast');el.textContent=t;el.classList.add('show');setTimeout(()=>el.classList.remove('show'),1600)}
 const count=()=>Object.values(cart).reduce((a,b)=>a+b,0);
@@ -138,9 +142,9 @@ const total=()=>Object.entries(cart).reduce((a,[id,q])=>a+prod(id).p*q,0);
 function chg(id,d){cart[id]=(cart[id]||0)+d;if(cart[id]<=0)delete cart[id];save();render()}
 function ctl(id){const q=cart[id]||0;return q?`<div class="qty"><button class="m" onclick="chg('${id}',-1)" aria-label="ลด">−</button>${q}<button onclick="chg('${id}',1)" aria-label="เพิ่ม">+</button></div>`:`<button class="add" onclick="chg('${id}',1);toast('เพิ่มลงตะกร้าแล้ว')" aria-label="เพิ่มลงตะกร้า">+</button>`}
 function render(){
-  $('#chips').innerHTML=CATS.map(c=>`<button class="${c==cat?'on':''}" onclick="cat='${c}';render()">${c}</button>`).join('');
+  $('#chips').innerHTML=loading?'':CATS.map(c=>`<button class="${c==cat?'on':''}" onclick="cat='${c}';render()">${c}</button>`).join('');
   $('#grid').innerHTML=MENU.filter(m=>cat=='ทั้งหมด'||m.c==cat).sort((a,b)=>rank(a)-rank(b)).map(m=>`<div class="item ${soldOut(m)?'out':soon(m)?'sn':''}"><div class="pic">${face(m)}</div><h3>${m.n}</h3><small>${m.d}${m.stock!==''&&m.stock!=null&&m.stock>0&&m.stock<=5?' · เหลือ '+m.stock:''}</small><div class="row"><span class="price">${fmt(m.p)}</span>${soon(m)?'<span class="soon">เร็วๆ นี้ ✨</span>':soldOut(m)?'<span class="sold">หมด</span>':(hasSw(m)?`<button class="add" onclick="askSw(${m.id})" aria-label="เพิ่มลงตะกร้า">+</button>`:ctl(m.id))}</div></div>`).join('');
-  if(!MENU.length)$('#grid').innerHTML='<div class="empty" style="grid-column:1/-1"><i>🧁</i>ตอนนี้ร้านยังไม่มีเมนูให้สั่ง</div>';$('#grid').insertAdjacentHTML('afterbegin',closedBanner());if(loading)$('#grid').innerHTML='<div class="empty" style="grid-column:1/-1"><i>🧁</i>กำลังโหลดเมนู...</div>';const q=count();$('#bar').hidden=!q||$('.view.on').id!='v-menu';$('#barQ').textContent=q+' รายการ · ดูตะกร้า';$('#barT').textContent=fmt(total());
+  if(!MENU.length)$('#grid').innerHTML='<div class="empty" style="grid-column:1/-1"><i>🧁</i>ตอนนี้ร้านยังไม่มีเมนูให้สั่ง</div>';$('#grid').insertAdjacentHTML('afterbegin',closedBanner());if(loading)$('#grid').innerHTML='<div class="ldg"><i>🧁</i>กำลังเตรียมขนมให้อยู่นะ...</div>'+'<div class="sk"></div>'.repeat(4);const q=count();$('#bar').hidden=!q||loading||$('.view.on').id!='v-menu';$('#barQ').textContent=q+' รายการ · ดูตะกร้า';$('#barT').textContent=fmt(total());
   renderCart();renderOrders();
 }
 function renderCart(){
@@ -159,7 +163,7 @@ async function order(){
   me={name,tel,addr};
   const items=Object.entries(cart).map(([id,q])=>{const m=prod(id);return {id:m.id,n:m.n+(swOf(id)?' ('+swOf(id)+')':''),q,p:m.p,sw:swOf(id)}});
   const ship=shipFee(way);
-  const slipFile=$('#oSlip')&&$('#oSlip').files[0],payM=$('#oPay').value;if(payM.startsWith('โอน')&&!slipFile){toast('แนบสลิปโอนเงินก่อน');return}const rec={no:'OU'+String(Date.now()).slice(-7),t:new Date().toLocaleString('th-TH',{dateStyle:'short',timeStyle:'short'}),items,sum:total()+ship,way,pay:payM,note:$('#oNote').value,name,tel,addr,km:loc?+loc.km.toFixed(1):'',map:loc?'https://maps.google.com/?q='+loc.lat+','+loc.lng:'',lat:loc?loc.lat:null,lng:loc?loc.lng:null};
+  const slipFile=$('#oSlip')&&$('#oSlip').files[0],payM=$('#oPay').value;if(payM.startsWith('โอน')&&!slipFile){toast('แนบสลิปโอนเงินก่อน');return}const rec={ts:Date.now(),no:'OU'+String(Date.now()).slice(-7),t:new Date().toLocaleString('th-TH',{dateStyle:'short',timeStyle:'short'}),items,sum:total()+ship,way,pay:payM,note:$('#oNote').value,name,tel,addr,km:loc?+loc.km.toFixed(1):'',map:loc?'https://maps.google.com/?q='+loc.lat+','+loc.lng:'',lat:loc?loc.lat:null,lng:loc?loc.lng:null};
   rec.sub=total();rec.ship=ship;rec.st='รอร้านรับออเดอร์';rec.sent=!ENDPOINT;
   orders.unshift(rec);cart={};save();render();go('orders');toast('สั่งซื้อสำเร็จ! 🎉');
   if(ENDPOINT)shrinkSend(rec,slipFile);
@@ -185,7 +189,7 @@ function getLoc(silent){if(!navigator.geolocation){locState='fail';renderLoc();i
  navigator.geolocation.getCurrentPosition(p=>{const a=p.coords.latitude,o=p.coords.longitude;loc={lat:a,lng:o,km:distKm(SHOP.lat,SHOP.lng,a,o)};locState='ok';renderLoc();refreshSum()},()=>{locState='fail';renderLoc();if(silent!==true)toast('ขอตำแหน่งไม่สำเร็จ กรุณาอนุญาตตำแหน่งในเบราว์เซอร์แล้วลองใหม่')},{enableHighAccuracy:true,timeout:15000,maximumAge:60000})}
 function autoLoc(){if(SHOP.lat==null||!navigator.geolocation)return;
  if(navigator.permissions&&navigator.permissions.query){navigator.permissions.query({name:'geolocation'}).then(r=>{if(r.state!='denied')getLoc(true);else locState='fail'}).catch(()=>getLoc(true))}else getLoc(true)}
-let loading=false,SHOP_OPEN=true,SHOP_MSG='';
+let loading=true,SHOP_OPEN=true,SHOP_MSG='';
 const closedBanner=()=>SHOP_OPEN?'':`<div class="card" style="grid-column:1/-1;border-color:#c0392b">🔴 <b>ร้านปิดรับออเดอร์ชั่วคราว</b>${SHOP_MSG?'<br>'+SHOP_MSG.replace(/[<>&]/g,''):''}</div>`;
 try{const c=JSON.parse(localStorage.getItem('ouan-menu')||'null');if(c&&c.length){MENU.length=0;c.forEach(x=>MENU.push(x));CATS=['ทั้งหมด',...new Set(MENU.map(m=>m.c))]}}catch(e){}
 let outbox=[];try{outbox=JSON.parse(localStorage.getItem('ouan-out')||'[]')}catch(e){}
@@ -200,7 +204,7 @@ async function poll(){if(!ENDPOINT)return;const act=orders.filter(x=>x.sent&&x.s
 setInterval(()=>{flush();poll()},15000);setInterval(()=>{if(!document.hidden)loadMenu()},20000);document.addEventListener('visibilitychange',()=>{if(!document.hidden){loadMenu();poll()}});addEventListener('online',flush);
 const soldOut=m=>m.st=='หมด'||(m.stock!==''&&m.stock!=null&&Number(m.stock)<=0),soon=m=>m.st=='เร็วๆนี้'&&!soldOut(m),rank=m=>soldOut(m)?2:soon(m)?1:0;
 let lmBusy=false;
-async function loadMenu(){if(!ENDPOINT||lmBusy)return;lmBusy=true;try{const r=await fetch(ENDPOINT+'?action=menu&t='+Date.now(),{signal:AbortSignal.timeout?AbortSignal.timeout(8000):undefined});const j=await r.json();if(j.ok&&j.shop){const ch=SHOP_OPEN!==j.shop.open||SHOP_MSG!==j.shop.msg;SHOP_OPEN=j.shop.open;SHOP_MSG=j.shop.msg||'';if(ch&&!$('#v-cart').classList.contains('on'))render()}if(!(j.ok&&Array.isArray(j.menu))||JSON.stringify(j.menu)==JSON.stringify(MENU))return;MENU.length=0;j.menu.forEach(x=>MENU.push(x));CATS=['ทั้งหมด',...new Set(MENU.map(m=>m.c))];if(!CATS.includes(cat))cat='ทั้งหมด';Object.keys(cart).forEach(k=>{if(!prod(k))delete cart[k]});save();try{localStorage.setItem('ouan-menu',JSON.stringify(MENU))}catch(e){}if(!$('#v-cart').classList.contains('on'))render()}catch(e){}finally{lmBusy=false}}
+async function loadMenu(){if(!ENDPOINT){if(loading){loading=false;render()}return}if(lmBusy)return;lmBusy=true;try{const r=await fetch(ENDPOINT+'?action=menu&t='+Date.now(),{signal:AbortSignal.timeout?AbortSignal.timeout(8000):undefined});const j=await r.json();if(j.ok&&j.shop){const ch=SHOP_OPEN!==j.shop.open||SHOP_MSG!==j.shop.msg;SHOP_OPEN=j.shop.open;SHOP_MSG=j.shop.msg||'';if(ch&&!$('#v-cart').classList.contains('on'))render()}if(!(j.ok&&Array.isArray(j.menu))||JSON.stringify(j.menu)==JSON.stringify(MENU))return;MENU.length=0;j.menu.forEach(x=>MENU.push(x));CATS=['ทั้งหมด',...new Set(MENU.map(m=>m.c))];if(!CATS.includes(cat))cat='ทั้งหมด';Object.keys(cart).forEach(k=>{if(!prod(k))delete cart[k]});save();try{localStorage.setItem('ouan-menu',JSON.stringify(MENU))}catch(e){}if(!$('#v-cart').classList.contains('on'))render()}catch(e){}finally{lmBusy=false;if(loading){loading=false;if(!$('#v-cart').classList.contains('on'))render()}}}
 function prev(i){const f=i.files[0],p=$('#slipPrev');if(f){p.src=URL.createObjectURL(f);p.hidden=false}}
 function shrink(f){return new Promise((ok,no)=>{const im=new Image();im.onload=()=>{const k=Math.min(1,1000/Math.max(im.width,im.height)),c=document.createElement('canvas');c.width=im.width*k;c.height=im.height*k;c.getContext('2d').drawImage(im,0,0,c.width,c.height);ok(c.toDataURL('image/jpeg',.8))};im.onerror=no;im.src=URL.createObjectURL(f)})}
 function renderOrders(){
