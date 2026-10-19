@@ -204,33 +204,54 @@ function renderCart(){
   if(!ids.length){$('#cartBody').innerHTML='<div class="empty"><i>🛒</i>ตะกร้ายังว่าง<br>เลือกขนมที่ชอบจากหน้าเมนูได้เลย</div>';return}
   
   $('#cartBody').innerHTML=closedBanner()+`<h2 style="font-size:18px">ตะกร้าของฉัน</h2><div class="card">${ids.map(id=>{const m=prod(id);return `<div class="line"><span>${face(m)} ${m.n}${swOf(id)?' · '+swOf(id):''}<br><small style="color:var(--ink)">${fmt(m.p)}</small></span>${ctl(id)}</div>`}).join('')}</div>
-  <div class="card"><div class="line"><span>ค่าขนม</span><span>${fmt(total())}</span></div><div class="line"><span>ค่าส่ง</span><span id="shipV"></span></div><div class="line"><b>รวมทั้งหมด</b><b class="price" id="sumV"></b></div></div>
+  <div class="card"><label>🏷️ โค้ดส่วนลด</label><div style="display:flex;gap:8px;align-items:center"><input id="oCode" placeholder="ใส่โค้ดส่วนลด" autocapitalize="characters" autocomplete="off" value="${eh(PROMO?PROMO.code:'')}" style="flex:1;text-transform:uppercase"><button type="button" class="gpsb" style="margin:0;white-space:nowrap" onclick="applyPromo()">ใช้โค้ด</button></div><div id="promoMsg"></div></div>
+  <div class="card"><div class="line"><span>ค่าขนม</span><span>${fmt(total())}</span></div><div class="line"><span>ค่าส่ง</span><span id="shipV"></span></div><div class="line" id="discRow" style="display:none;color:#2e9e5b"><span>ส่วนลด</span><span id="discV"></span></div><div class="line"><b>รวมทั้งหมด</b><b class="price" id="sumV"></b></div></div>
   <div class="card"><label>ชื่อ</label><input id="oName" value="${me.name||''}"><label>เบอร์โทร</label><input id="oTel" inputmode="tel" value="${me.tel||''}"><label>ที่อยู่จัดส่ง</label><textarea id="oAddr" rows="2">${eh(me.addr||autoAddr||'')}</textarea><button type="button" class="gpsb" onclick="useGps('oAddr')">📍 ใช้ที่อยู่จากตำแหน่งปัจจุบัน</button><label>ฝากบอกไรเดอร์ (เฉพาะจัดส่ง)</label><input id="oRNote" maxlength="200" placeholder="เช่น บ้านสีฟ้า โทรก่อนถึงนะ"><div id="locBox"></div><label>วิธีรับของ</label><select id="oWay" onchange="refreshSum()"><option>จัดส่ง</option><option>รับที่ร้าน</option></select><label>วิธีชำระเงิน</label><input id="oPay" value="โอนเงิน / พร้อมเพย์" readonly><label>หมายเหตุ</label><input id="oNote" placeholder="เช่น ไม่หวานมาก"><div id="payBox"></div></div>
   <button class="cta" onclick="order()">ยืนยันสั่งซื้อ</button>`;renderLoc();refreshSum();$('#oRNote').value=me.rnote||'';
 }
-async function order(){
+async function order(){if(order.b)return;order.b=1;try{await orderGo()}finally{order.b=0}}
+async function orderGo(){
   const name=$('#oName').value.trim(),tel=$('#oTel').value.trim(),addr=$('#oAddr').value.trim(),way=$('#oWay').value;
   if(!SHOP_OPEN){toast(SHOP_MSG||'ร้านปิดรับออเดอร์ชั่วคราว');return}
   if(!name||!tel||(way=='จัดส่ง'&&!addr)){toast('กรอกชื่อ เบอร์โทร และที่อยู่ให้ครบ');return}
   me={name,tel,addr};
   const items=Object.entries(cart).map(([id,q])=>{const m=prod(id);return {id:m.id,n:m.n+(swOf(id)?' ('+swOf(id)+')':''),q,p:m.p,sw:swOf(id)}});
   const ship=shipFee(way);
-  const slipFile=$('#oSlip')&&$('#oSlip').files[0],payM=$('#oPay').value;if(payM.startsWith('โอน')&&!slipFile){toast('แนบสลิปโอนเงินก่อน');return}const rec={ts:Date.now(),no:'OU'+String(Date.now()).slice(-7),t:new Date().toLocaleString('th-TH',{dateStyle:'short',timeStyle:'short'}),items,sum:total()+ship,way,pay:payM,note:$('#oNote').value,rnote:way=='จัดส่ง'?($('#oRNote')?$('#oRNote').value.trim():''):'',cv:CONSENT_V,ct:consentAt,name,tel,addr,km:loc?+loc.km.toFixed(1):'',map:loc?'https://maps.google.com/?q='+loc.lat+','+loc.lng:'',lat:loc?loc.lat:null,lng:loc?loc.lng:null};
-  rec.sub=total();rec.ship=ship;rec.st='รอร้านรับออเดอร์';rec.sent=!ENDPOINT;
-  orders.unshift(rec);cart={};save();render();go('orders');toast('สั่งซื้อสำเร็จ! 🎉');
+  if(PROMO){ // ตรวจโค้ดกับร้านอีกรอบก่อนส่งออเดอร์ (กันโค้ดหมด/ครบสิทธิ์ระหว่างที่เลือกของ)
+   if(total()<(PROMO.min||0)){toast('ยอดสั่งยังไม่ถึงขั้นต่ำของโค้ดส่วนลด');return}
+   try{const r=await fetch(ENDPOINT+'?action=promo&code='+encodeURIComponent(PROMO.code)+'&sub='+total()+'&ship='+ship+'&tel='+encodeURIComponent(tel)+'&t='+Date.now());const j=await r.json();
+    if(!j.ok){PROMO=null;refreshSum();toast('โค้ดส่วนลดใช้ไม่ได้: '+(j.error||'')+' (ยังไม่ได้สั่ง กดยืนยันอีกครั้งเพื่อสั่งแบบไม่มีโค้ด)');return}}
+   catch(e){toast('ตรวจสอบโค้ดไม่ได้ ลองใหม่อีกครั้ง');return}}
+  const slipFile=$('#oSlip')&&$('#oSlip').files[0],payM=$('#oPay').value;if(payM.startsWith('โอน')&&!slipFile){toast('แนบสลิปโอนเงินก่อน');return}const rec={ts:Date.now(),no:'OU'+String(Date.now()).slice(-7),t:new Date().toLocaleString('th-TH',{dateStyle:'short',timeStyle:'short'}),items,sum:total()+ship-promoDisc(ship),code:PROMO?PROMO.code:'',way,pay:payM,note:$('#oNote').value,rnote:way=='จัดส่ง'?($('#oRNote')?$('#oRNote').value.trim():''):'',cv:CONSENT_V,ct:consentAt,name,tel,addr,km:loc?+loc.km.toFixed(1):'',map:loc?'https://maps.google.com/?q='+loc.lat+','+loc.lng:'',lat:loc?loc.lat:null,lng:loc?loc.lng:null};
+  rec.sub=total();rec.ship=ship;rec.disc=promoDisc(ship);rec.st='รอร้านรับออเดอร์';rec.sent=!ENDPOINT;
+  orders.unshift(rec);cart={};PROMO=null;save();render();go('orders');toast('สั่งซื้อสำเร็จ! 🎉');
   if(ENDPOINT)shrinkSend(rec,slipFile);
 }
-const ENDPOINT='https://script.google.com/macros/s/AKfycbziyyX069fx1NyRGMTYitCJLf54iDEE8Jj31z7IPHrqPsnPqy34qkGJlDNhE4rstv8m/exec',PP='0909601347'; // วาง URL ของ Apps Script ที่ ENDPOINT
+const ENDPOINT='https://script.google.com/macros/s/AKfycby2usI_DEo2hkrPRNRDL977T_tTK56pBTDPI_5q_AnpY0zB9JVOepCOKstl07A7SMYq/exec',PP='0909601347'; // วาง URL ของ Apps Script ที่ ENDPOINT
 function crc(s){let c=0xFFFF;for(const ch of s){c^=ch.charCodeAt(0)<<8;for(let i=0;i<8;i++)c=c&0x8000?((c<<1)^0x1021)&0xFFFF:(c<<1)&0xFFFF}return c.toString(16).toUpperCase().padStart(4,'0')}
 function ppPayload(a){const am=a.toFixed(2),s='000201010212'+'2937'+'0016A000000677010111'+'0113'+'0066'+PP.slice(1)+'5303764'+'54'+String(am.length).padStart(2,'0')+am+'5802TH'+'6304';return s+crc(s)}
-function updatePay(){const b=$('#payBox');if(!b)return;const amt=total()+shipFee($('#oWay').value);if(!$('#oPay').value.startsWith('โอน')){b.innerHTML='';return}if(b.dataset.amt==String(amt)&&b.innerHTML)return;b.dataset.amt=amt;
+function updatePay(){const b=$('#payBox');if(!b)return;const amt=grand($('#oWay').value);if(!$('#oPay').value.startsWith('โอน')){b.innerHTML='';return}if(b.dataset.amt==String(amt)&&b.innerHTML)return;b.dataset.amt=amt;
  b.innerHTML=`<div class="qrwrap"><b>สแกนจ่ายพร้อมเพย์</b><div id="qr"></div><span class="amt">${fmt(amt)}</span></div><small style="color:var(--ink)">พร้อมเพย์ ${PP} · โอนแล้วแนบสลิปด้านล่าง</small><label style="display:block;margin-top:10px">แนบสลิปโอนเงิน</label><input type="file" id="oSlip" accept="image/*" onchange="prev(this)"><img id="slipPrev" class="slip" alt="สลิป" hidden>`;
  if(window.QRCode){new QRCode($('#qr'),{text:ppPayload(amt),width:200,height:200,colorDark:'#2b3a8f',colorLight:'#ffffff',correctLevel:QRCode.CorrectLevel.H});const lg=document.createElement('img');lg.className='qlogo';lg.alt='';lg.src=document.querySelector('header img').src;$('#qr').appendChild(lg)}}
 // พิกัดร้าน: เอราวัณ คอนโดมิเนียม พุทธบูชา (หมุดจาก Google Maps)
 const SHOP={lat:13.6518192,lng:100.485199},FREE_KM=5,FEE=25;let loc=null;
 function distKm(a,b,c,d){const r=x=>x*Math.PI/180,h=Math.sin(r(c-a)/2)**2+Math.cos(r(a))*Math.cos(r(c))*Math.sin(r(d-b)/2)**2;return 12742*Math.asin(Math.sqrt(h))}
 function shipFee(way){if(way!='จัดส่ง')return 0;if(SHOP.lat!=null&&loc)return loc.km<=FREE_KM?0:FEE;return total()>=200?0:25}
-function refreshSum(){if(!$('#shipV'))return;const f=shipFee($('#oWay').value);$('#shipV').textContent=f?fmt(f):'ฟรี';$('#sumV').textContent=fmt(total()+f);updatePay()}
+var PROMO=null;
+function pCalc(R,sub,ship){if(!R||sub<(R.min||0))return 0;let d=R.type=='%'?Math.floor(sub*R.val/100):R.type=='ส่งฟรี'?ship:R.val;if(R.type=='%'&&R.max>0)d=Math.min(d,R.max);return Math.max(0,Math.min(d,R.type=='ส่งฟรี'?ship:sub,sub+ship-1))} // สูตรเดียวกับหลังบ้าน
+function promoDisc(ship){return pCalc(PROMO,total(),ship)}
+function grand(way){const s=shipFee(way);return total()+s-promoDisc(s)}
+function promoNote(){const m=$('#promoMsg');if(!m||!PROMO)return;const s=shipFee($('#oWay')?$('#oWay').value:'จัดส่ง'),d=promoDisc(s);m.innerHTML=total()<(PROMO.min||0)?'<small style="color:#c0392b">⚠️ ต้องสั่งขั้นต่ำ '+fmt(PROMO.min)+' ถึงจะใช้โค้ด '+eh(PROMO.code)+' ได้</small>':d?'<small style="color:#2e9e5b">✅ ใช้โค้ด '+eh(PROMO.code)+' แล้ว: '+eh(PROMO.label)+' (−'+fmt(d)+')</small>':'<small style="color:var(--ink)">โค้ด '+eh(PROMO.code)+' ยังไม่ลดในออเดอร์นี้ (เช่น ค่าส่งฟรีอยู่แล้ว)</small>'}
+function refreshSum(){if(!$('#shipV'))return;const f=shipFee($('#oWay').value),d=promoDisc(f);$('#shipV').textContent=f?fmt(f):'ฟรี';const dr=$('#discRow');if(dr){dr.style.display=d?'':'none';$('#discV').textContent='−'+fmt(d)}$('#sumV').textContent=fmt(total()+f-d);promoNote();updatePay()}
+async function applyPromo(){const el=$('#oCode'),code=(el.value||'').trim().toUpperCase(),m=$('#promoMsg');
+ if(!code){PROMO=null;refreshSum();m.innerHTML='';toast('ล้างโค้ดแล้ว');return}
+ if(!ENDPOINT){m.innerHTML='<small style="color:#c0392b">ยังไม่ได้เชื่อมระบบร้าน</small>';return}
+ m.innerHTML='<small>⏳ กำลังตรวจสอบโค้ด...</small>';
+ try{const ship=shipFee($('#oWay').value),tel=($('#oTel')?$('#oTel').value:'').trim();
+  const r=await fetch(ENDPOINT+'?action=promo&code='+encodeURIComponent(code)+'&sub='+total()+'&ship='+ship+'&tel='+encodeURIComponent(tel)+'&t='+Date.now());const j=await r.json();
+  if(!j.ok){PROMO=null;refreshSum();m.innerHTML='<small style="color:#c0392b">❌ '+eh(j.error||'ใช้โค้ดนี้ไม่ได้')+'</small>';return}
+  PROMO={code:j.code,type:j.type,val:j.val,min:j.min,max:j.max,label:j.label};el.value=j.code;refreshSum();toast('ใช้โค้ดสำเร็จ 🎉')}
+ catch(e){m.innerHTML='<small style="color:#c0392b">❌ ตรวจสอบโค้ดไม่ได้ ลองใหม่อีกครั้ง</small>'}}
 let locState='idle';
 function renderLoc(){const b=$('#locBox');if(!b)return;if(SHOP.lat==null){b.innerHTML='';return}
  if(loc){const f=loc.km<=FREE_KM;b.innerHTML=`<div class="locres">📍 ห่างจากร้าน <b>${loc.km.toFixed(1)} กม.</b> · ${f?'ส่งฟรี 🎉':'เกินระยะส่งฟรี '+FREE_KM+' กม. ค่าส่ง '+fmt(FEE)}</div><button type="button" onclick="getLoc()" style="background:none;border:0;color:var(--ink);font:inherit;font-size:12px;text-decoration:underline;padding:4px 0">รีเฟรชตำแหน่ง</button>`;return}
